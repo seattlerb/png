@@ -1,0 +1,8 @@
+CHANGES
+Manifest.txt
+README
+Rakefile
+example/lines.rb
+example/profile.rb
+lib/png.rb
+test/test_png.rb
