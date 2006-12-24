@@ -158,13 +158,11 @@ class PNG
   end
 
   def self.paeth(a, b, c) # left, above, upper left
-    #puts "paeth %p" % [[a, b, c]]
     p = a + b - c
     pa = (p - a).abs
     pb = (p - b).abs
     pc = (p - c).abs
 
-    #puts "paethb %p" % [[pa, pb, pc]]
     return a if pa <= pb && pa <= pc
     return b if pb <= pc
     c
@@ -186,7 +184,6 @@ class PNG
     until data.empty? do
       row_data = data.slice! 0, scanline_length
       filter = row_data.shift
-      puts "row #{row} filter #{filter}"
       case filter
       when 0 then # None
       when 1 then # Sub
@@ -233,7 +230,6 @@ class PNG
 
       col = 0
       row_data.each_slice 4 do |slice|
-        p slice
         canvas[col, row] = PNG::Color.new(*slice)
         col += 1
       end
@@ -245,7 +241,7 @@ class PNG
   def self.read_IHDR(data)
     width, height, *rest = data.unpack 'N2C5'
     raise ArgumentError, 'unsupported PNG file' unless rest == [8, 6, 0, 0, 0]
-    return PNG::Canvas.new(width, height)
+    return PNG::Canvas.new(height, width)
   end
 
   ##
@@ -273,7 +269,7 @@ class PNG
     blob << SIGNATURE
 
     blob << PNG.chunk('IHDR',
-                      [ @height, @width, @bits, 6, 0, 0, 0 ].pack("N2C5"))
+                      [@width, @height, @bits, 6, 0, 0, 0 ].pack("N2C5"))
     # 0 == filter type code "none"
     data = @data.map { |row| [0] + row.map { |p| p.values } }.fast_flatten
     blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data.fast_pack, 9))
@@ -402,16 +398,16 @@ class PNG
     def [](x, y)
       raise "bad x value #{x} >= #{@height}" if x >= @height
       raise "bad y value #{y} >= #{@width}" if y >= @width
-      @data[y][x]
+      @data[x][y]
     end
 
     ##
     # Sets the color of the pixel at (+x+, +y+) to +color+.
 
     def []=(x, y, color)
-      raise "bad x value #{x} >= #{@height}" if x >= @height
-      raise "bad y value #{y} >= #{@width}"  if y >= @width
-      @data[y][x] = color
+      raise "bad x value #{x} >= #{@width}" if x >= @width
+      raise "bad y value #{y} >= #{@height}"  if y >= @height
+      @data[x][y] = color
     end
 
     ##
