@@ -4,5 +4,6 @@ README
 Rakefile
 example/lines.rb
 example/profile.rb
+example/profile_lines.rb
 lib/png.rb
 test/test_png.rb

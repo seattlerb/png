@@ -1,0 +1,10 @@
+= 1.1.0
+
+* RubyInline optimized saving
+* Basic PNG loadinge
+* Switched to Hoe
+
+= 1.0.0
+
+* Birthday!
+

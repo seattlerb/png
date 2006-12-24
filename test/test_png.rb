@@ -139,21 +139,53 @@ class TestPNG < Test::Unit::TestCase
   def setup
     @canvas = PNG::Canvas.new 10, 10
     @png = PNG.new @canvas
-  end
 
-  def test_class_chunk
-    chunk = PNG.chunk 'IDHR', [10, 10, 8, 6, 0, 0, 0 ].pack('N2C5')
-    expected = "\000\000\000\rIDHR\000\000\000\n\000\000\000\n\b\006\000\000\000o\345\265\221"
-    assert_equal expected, chunk
-  end
+    @IHDR_length = "\000\000\000\r"
+    @IHDR_crc = "\2152\317\275"
+    @IHDR_crc_value = @IHDR_crc.unpack('N').first
+    @IHDR_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000"
+    @IHDR_chunk = "#{@IHDR_length}IHDR#{@IHDR_data}#{@IHDR_crc}"
 
-  def test_to_blob
-    expected = <<-EOF.unpack('m*').first
+    @blob = <<-EOF.unpack('m*').first
 iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAEUlEQVR42mP4
 TyRgGFVIX4UAI/uOgGWVNeQAAAAASUVORK5CYII=
     EOF
+  end
 
-    assert_equal expected, @png.to_blob
+  def test_class_check_crc
+    assert PNG.check_crc('IHDR', @IHDR_data, @IHDR_crc_value)
+  end
+
+  def test_class_chunk
+    chunk = PNG.chunk 'IHDR', [10, 10, 8, 6, 0, 0, 0 ].pack('N2C5')
+    assert_equal @IHDR_chunk, chunk
+  end
+
+  def test_class_read_chunk
+    type, data = PNG.read_chunk @IHDR_chunk
+
+    assert_equal 'IHDR', type
+    assert_equal @IHDR_data, data
+  end
+
+  def test_class_read_IDAT
+    canvas = PNG::Canvas.new 10, 10
+
+    data = "x\332c\370O$`\030UH_\205\000#\373\216\200"
+
+    PNG.read_IDAT data, canvas
+
+    assert_equal @blob, PNG.new(canvas).to_blob
+  end
+
+  def test_class_read_IHDR
+    canvas = PNG.read_IHDR @IHDR_data
+    assert_equal 10, canvas.width
+    assert_equal 10, canvas.height
+  end
+
+  def test_to_blob
+    assert_equal @blob, @png.to_blob
   end
 
 end
