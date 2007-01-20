@@ -1,8 +1,14 @@
 = 1.1.0
 
-* RubyInline optimized saving
-* Basic PNG loadinge
+* Fixed bug in PNG::Canvas#each
+* Patch from Tom Werner
+  * Added PNG::Canvas#inpsect
+  * Added PNG::Canvas#to_s
+  * Added PNG::Color#to_ascii
+* Sped up PNG#to_blob with RubyInline
+* Basic PNG loading
 * Switched to Hoe
+* PNG.pie_chart from png/pie
 
 = 1.0.0
 

@@ -5,11 +5,11 @@ require 'png'
 ##
 # Makes a pie chart you can pass to PNG.new:
 #
-# png = PNG.new pie_chart(250, 0.30)
-# png.save "pie.png"
-# system 'open pie.png'
+#   png = PNG.new pie_chart(250, 0.30)
+#   png.save "pie.png"
+#   system 'open pie.png'
 
-def pie_chart(diameter, pct_green)
+def PNG.pie_chart(diameter, pct_green)
   diameter += 1 if diameter % 2 == 0
   radius = (diameter / 2.0).to_i
   pct_in_deg = 360.0 * pct_green
@@ -31,5 +31,7 @@ def pie_chart(diameter, pct_green)
       end
     end
   end
-  canvas
+
+  PNG.new canvas
 end
+

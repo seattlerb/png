@@ -1,4 +1,5 @@
 CHANGES
+History.txt
 Manifest.txt
 README
 Rakefile
@@ -6,4 +7,5 @@ example/lines.rb
 example/profile.rb
 example/profile_lines.rb
 lib/png.rb
+lib/png/pie.rb
 test/test_png.rb
