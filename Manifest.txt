@@ -1,7 +1,6 @@
-CHANGES
 History.txt
 Manifest.txt
-README
+README.txt
 Rakefile
 example/lines.rb
 example/profile.rb

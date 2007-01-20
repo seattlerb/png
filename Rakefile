@@ -7,7 +7,7 @@ Hoe.new 'png', '1.1.0' do |s|
   s.email = 'ryand-ruby@zenspider.com'
   s.rubyforge_name = 'seattlerb'
 
-  p.changes = File.read('History.txt').scan(/\A(=.*?)^=/m).first.first
+  s.changes = File.read('History.txt').scan(/\A(=.*?)^=/m).first.first
 
   s.extra_deps << ['RubyInline', '>= 3.5.0']
 end
