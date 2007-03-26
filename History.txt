@@ -2,7 +2,7 @@
 
 + 4 major enhancements:
     + Fixed and incorporated Dominik Barathon's optimizations.
-    + Wrote inline methods for png_crc and png_join.
+    + Wrote inline methods for png_crc and png_join. Now about 15x faster overall.
     + Basic PNG loading.
     + Reoriented x/y origin to bottom left. This will break things!
 + 3 minor enhancements:
