@@ -4,24 +4,6 @@ require 'test/zentest_assertions'
 require 'png'
 require 'png/pie'
 
-class TestArray < Test::Unit::TestCase
-
-  def test_fast_pack
-    data = [0xff, 0xff, 0xff, 0x00]
-
-    assert_equal data.pack('C*'), data.fast_pack
-  end
-
-  def test_fast_flatten
-    canvas = [
-      [0, [0x01, 0x02, 0x03, 0x04], [0x05, 0x06, 0x07, 0x08]],
-      [0, [0x09, 0x0a, 0x0b, 0x0c], [0x0d, 0x0e, 0x0f, 0x10]],
-    ]
-    assert_equal canvas.flatten, canvas.fast_flatten
-  end
-
-end
-
 class TestPNG < Test::Unit::TestCase
 
   def setup

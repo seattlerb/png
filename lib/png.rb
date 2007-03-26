@@ -1,90 +1,23 @@
 require 'zlib'
 require 'enumerator'
 
-class Array # :nodoc: # ZenTest SKIP
-
-  require 'inline'
-
-  inline do |builder|
-    builder.include '"intern.h"'
-
-    builder.c <<-EOC
-      static void
-      fast_flatten() {
-        VALUE flat, row, pixel;
-        long total_length, height, width, cur = 0, x = 0, y = 0;
-
-        height = RARRAY(self)->len;
-        width = RARRAY(RARRAY(self)->ptr[0])->len;
-        total_length = height * (width - 1) * 4 + height; /* data + filter */
-
-        flat = rb_ary_new2(total_length);
-
-        for (x = 0; x < height; x++) {
-          row = RARRAY(self)->ptr[x];
-
-          pixel = RARRAY(row)->ptr[0]; /* row filter */
-          MEMCPY(RARRAY(flat)->ptr + cur, &pixel, VALUE, 1);
-          cur++;
-
-          for (y = 1; y < width; y++) { /* row data */
-            pixel = RARRAY(row)->ptr[y];
-            MEMCPY(RARRAY(flat)->ptr + cur, RARRAY(pixel)->ptr, VALUE, 4);
-            cur += 4;
-          }
-        }
-        RARRAY(flat)->len = total_length;
-        return flat;
-      }
-    EOC
-
-    builder.c <<-EOC
-      static void
-      fast_pack() {
-        VALUE res;
-        long i;
-        char c;
-
-        res = rb_str_buf_new(RARRAY(self)->len);
-
-        for (i = 0; i < RARRAY(self)->len; i++) {
-          c = FIX2LONG(RARRAY(self)->ptr[i]);
-          rb_str_buf_cat(res, &c, sizeof(char));
-        }
-
-        return res;
-      }
-    EOC
-  end
-
-rescue StandardError, LoadError
-
-  def fast_pack
-    pack 'C*'
-  end
-
-  def fast_flatten
-    flatten
-  end
-end
-
 class String # :nodoc: # ZenTest SKIP
+
+  unless defined? @@crc then
+    @@crc = Array.new(256)
+    256.times do |n|
+      c = n
+      8.times do
+        c = (c & 1 == 1) ? 0xedb88320 ^ (c >> 1) : c >> 1
+      end
+      @@crc[n] = c
+    end
+  end
 
   ##
   # Calculates a CRC using the algorithm in the PNG specification.
 
   def png_crc
-    unless defined? @@crc then
-      @@crc = Array.new(256)
-      256.times do |n|
-        c = n
-        8.times do
-          c = (c & 1 == 1) ? 0xedb88320 ^ (c >> 1) : c >> 1
-        end
-        @@crc[n] = c
-      end
-    end
-
     c = 0xffffffff
     each_byte do |b|
       c = @@crc[(c^b) & 0xff] ^ (c >> 8)
@@ -116,11 +49,6 @@ end
 #   canvas.line 50, 50, 100, 50, PNG::Color::Blue
 #   png = PNG.new canvas
 #   png.save 'blah.png'
-#
-# = Note
-#
-# PNG will drop back to a pure-ruby implementation if the
-# RubyInline-accelerated methods in Array fail to compile.
 
 class PNG
 
@@ -265,24 +193,12 @@ class PNG
 
   def to_blob
     blob = []
+
     blob << SIGNATURE
-
-    blob << PNG.chunk('IHDR',
-                      [@width, @height, @bits, 6, 0, 0, 0 ].pack("N2C5"))
+    blob << PNG.chunk('IHDR', [@width, @height, @bits, 6, 0, 0, 0 ].pack("N2C5"))
     # 0 == filter type code "none"
-    data = @data.map { |row| [0] + row.map { |p| p.values } }.fast_flatten
-
-# 1)
-#    data = @data.map { |row| "\0" < row.map { |p| p.values.pack("C*") }.join }
-
-# 2)
-#    format_str = "%c%c%c%c"
-#    data = @data.map { |row| "\0" < row.map { |p| format_str % p.values }.join }
-
-# 3) - but causes bus error - and regular flatten fails tests
-#    data = @data.map { |row| [0] + row.map { |p| p.values_str } }.fast_flatten
-
-    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data.fast_pack))
+    data = @data.map { |row| "\0" + row.map { |p| p.values }.join }
+    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data.join))
     blob << PNG.chunk('IEND', '')
     blob.join
   end
@@ -305,8 +221,7 @@ class PNG
     # Creates a new color with values +red+, +green+, +blue+, and +alpha+.
 
     def initialize(red, green, blue, alpha, name = nil)
-      @values = [red, green, blue, alpha]
-      # @values = "%c%c%c%c" % [red, green, blue, alpha]
+      @values = "%c%c%c%c" % [red, green, blue, alpha]
       @name = name
     end
 
