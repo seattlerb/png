@@ -405,7 +405,7 @@ class PNG
     def [](x, y)
       raise "bad x value #{x} >= #{@width}" if x >= @width
       raise "bad y value #{y} >= #{@height}" if y >= @height
-      @data[@width-y-1][x]
+      @data[@height-y-1][x]
     end
 
     ##
@@ -414,7 +414,7 @@ class PNG
     def []=(x, y, color)
       raise "bad x value #{x} >= #{@width}" if x >= @width
       raise "bad y value #{y} >= #{@height}"  if y >= @height
-      @data[@width-y-1][x] = color
+      @data[@height-y-1][x] = color
     end
 
     def inspect # :nodoc:

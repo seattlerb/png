@@ -3,10 +3,10 @@ require 'rubygems'
 require 'png'
 require 'png/pie'
 
-class TestPNG < Test::Unit::TestCase
+class TestPng < Test::Unit::TestCase
 
   def setup
-    @canvas = PNG::Canvas.new 10, 10, PNG::Color::White
+    @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
     @png = PNG.new @canvas
 
     @IHDR_length = "\000\000\000\r"
@@ -16,8 +16,8 @@ class TestPNG < Test::Unit::TestCase
     @IHDR_chunk = "#{@IHDR_length}IHDR#{@IHDR_data}#{@IHDR_crc}"
 
     @blob = <<-EOF.unpack('m*').first
-iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAEUlEQVR4nGP4
-TyRgGFVIX4UAI/uOgBh6qvoAAAAASUVORK5CYII=
+iVBORw0KGgoAAAANSUhEUgAAAAUAAAAKCAYAAAB8OZQwAAAAD0lEQVR4nGP4
+jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
     EOF
   end
 
@@ -61,7 +61,7 @@ TyRgGFVIX4UAI/uOgBh6qvoAAAAASUVORK5CYII=
 class TestCanvas < Test::Unit::TestCase
 
   def setup
-    @canvas = PNG::Canvas.new 10, 10, PNG::Color::White
+    @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
   end
 
   def test_index
@@ -69,11 +69,35 @@ class TestCanvas < Test::Unit::TestCase
     assert_same @canvas[1, 2], @canvas.data[1][2]
   end
 
+  def test_index_tall
+    @canvas = PNG::Canvas.new 2, 4, PNG::Color::White
+    @canvas[ 0, 0] = PNG::Color::Black
+    @canvas[ 0, 3] = PNG::Color::Background
+    @canvas[ 1, 0] = PNG::Color::Yellow
+    @canvas[ 1, 3] = PNG::Color::Blue
+
+    expected = "  ,,\n0000\n0000\n..++\n"
+
+    assert_equal expected, @canvas.to_s
+  end
+
+  def test_index_wide
+    @canvas = PNG::Canvas.new 4, 2, PNG::Color::White
+    @canvas[ 0, 0] = PNG::Color::Black
+    @canvas[ 3, 0] = PNG::Color::Background
+    @canvas[ 0, 1] = PNG::Color::Yellow
+    @canvas[ 3, 1] = PNG::Color::Blue
+
+    expected = "++0000,,\n..0000  \n"
+
+    assert_equal expected, @canvas.to_s
+  end
+
   def test_index_bad_x
     begin
-      @canvas[11, 1]
+      @canvas[6, 1]
     rescue => e
-      assert_equal "bad x value 11 >= 10", e.message
+      assert_equal "bad x value 6 >= 5", e.message
     else
       flunk "didn't raise"
     end
@@ -91,29 +115,29 @@ class TestCanvas < Test::Unit::TestCase
 
   def test_index_equals
     @canvas[1, 2] = PNG::Color::Red
-   assert_equal PNG::Color::Red, @canvas[1, 2]
-   assert_same @canvas[1, 2], @canvas.data[7][1]
+    assert_equal PNG::Color::Red, @canvas[1, 2]
+    assert_same @canvas[1, 2], @canvas.data[7][1]
 
     expected = "
-00000000000000000000
-00000000000000000000
-00000000000000000000
-00000000000000000000
-00000000000000000000
-00000000000000000000
-00000000000000000000
-00,,0000000000000000
-00000000000000000000
-00000000000000000000".strip + "\n"
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+00,,000000
+0000000000
+0000000000".strip + "\n"
     actual = @canvas.to_s
     assert_equal expected, actual
   end
 
   def test_index_equals_bad_x
     begin
-      @canvas[11, 1] = PNG::Color::Red
+      @canvas[6, 1] = PNG::Color::Red
     rescue => e
-      assert_equal "bad x value 11 >= 10", e.message
+      assert_equal "bad x value 6 >= 5", e.message
     else
       flunk "didn't raise"
     end
@@ -134,48 +158,48 @@ class TestCanvas < Test::Unit::TestCase
 #   end
 
   def test_inspect
-    assert_equal "#<PNG::Canvas 10x10>", @canvas.inspect
+    assert_equal "#<PNG::Canvas 5x10>", @canvas.inspect
   end
 
   def test_point
     assert_equal PNG::Color.new(0xfe, 0x00, 0xfe, 0xfe),
-                 @canvas.point(5, 5, PNG::Color::Magenta)
+                 @canvas.point(0, 0, PNG::Color::Magenta)
     # flunk "this doesn't test ANYTHING"
   end
 
   def test_line
-    @canvas.line 0, 9, 9, 0, PNG::Color::Black
+    @canvas.line 0, 9, 4, 0, PNG::Color::Black
 
     expected = <<-EOF
-..000000000000000000
-00..0000000000000000
-0000..00000000000000
-000000..000000000000
-00000000..0000000000
-0000000000..00000000
-000000000000..000000
-00000000000000..0000
-0000000000000000..00
-000000000000000000..
+..00000000
+,,00000000
+00,,000000
+00..000000
+00++++0000
+0000..0000
+0000++++00
+000000..00
+000000,,00
+00000000..
     EOF
 
     assert_equal expected, @canvas.to_s
   end
 
   def test_positive_slope_line
-    @canvas.line 0, 0, 9, 9, PNG::Color::Black
+    @canvas.line 0, 0, 4, 9, PNG::Color::Black
 
     expected = <<-EOF
-000000000000000000..
-0000000000000000..00
-00000000000000..0000
-000000000000..000000
-0000000000..00000000
-00000000..0000000000
-000000..000000000000
-0000..00000000000000
-00..0000000000000000
-..000000000000000000
+00000000..
+00000000,,
+000000,,00
+000000..00
+0000++++00
+0000..0000
+00++++0000
+00..000000
+00,,000000
+..00000000
     EOF
 
     assert_equal expected, @canvas.to_s
@@ -186,8 +210,8 @@ class TestCanvas < Test::Unit::TestCase
   end
 
   def test_to_s_normal
-    @canvas = PNG::Canvas.new 10, 10, PNG::Color::White
-    expected = util_ascii_art(10, 10)
+    @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
+    expected = util_ascii_art(5, 10)
     assert_equal expected, @canvas.to_s
   end
 
@@ -233,7 +257,7 @@ class TestCanvas < Test::Unit::TestCase
 #   end
 end
 
-class TestPNG::TestColor < Test::Unit::TestCase
+class TestPng::TestColor < Test::Unit::TestCase
   def setup
     @color = PNG::Color.new 0x01, 0x02, 0x03, 0x04
   end
@@ -325,7 +349,7 @@ end
 
 end
 
-class TestPNG::TestPie < Test::Unit::TestCase
+class TestPng::TestPie < Test::Unit::TestCase
   def setup
 
   end
