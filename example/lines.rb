@@ -2,7 +2,7 @@
 
 require 'png'
 
-canvas = PNG::Canvas.new 1024, 1024, PNG::Color::Black
+canvas = PNG::Canvas.new 1024, 1024, PNG::Color::White
 
 #canvas.each do |x, y|
 #  case x
@@ -17,9 +17,10 @@ canvas = PNG::Canvas.new 1024, 1024, PNG::Color::Black
 canvas.line  50,  50, 100,  50, PNG::Color::Blue
 canvas.line  50,  50,  50, 100, PNG::Color::Blue
 canvas.line 100,  50, 150, 100, PNG::Color::Blue
-canvas.line 100,  50, 125, 100, PNG::Color::Green # currently wrong
-canvas.line 100,  50, 200,  75, PNG::Color::Green # currently wrong
+canvas.line 100,  50, 125, 100, PNG::Color::Green
+canvas.line 100,  50, 200,  75, PNG::Color::Green
 canvas.line   0, 200, 200,   0, PNG::Color::Black
+canvas.line   0, 200, 150,   0, PNG::Color::Red
 
 png = PNG.new canvas
 png.save 'blah.png'

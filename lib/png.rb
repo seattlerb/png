@@ -1,7 +1,7 @@
 require 'zlib'
 require 'enumerator'
 
-class Array # :nodoc:
+class Array # :nodoc: # ZenTest SKIP
 
   require 'inline'
 
@@ -58,7 +58,7 @@ class Array # :nodoc:
   end
 
 rescue StandardError, LoadError
-  
+
   def fast_pack
     pack 'C*'
   end
@@ -66,10 +66,9 @@ rescue StandardError, LoadError
   def fast_flatten
     flatten
   end
-
 end
 
-class String # :nodoc:
+class String # :nodoc: # ZenTest SKIP
 
   ##
   # Calculates a CRC using the algorithm in the PNG specification.
@@ -111,7 +110,7 @@ end
 # = Example
 #
 #   require 'png'
-#   
+#
 #   canvas = PNG::Canvas.new 200, 200
 #   canvas[100, 100] = PNG::Color::Black
 #   canvas.line 50, 50, 100, 50, PNG::Color::Blue
@@ -137,11 +136,11 @@ class PNG
   def self.load(png)
     png = png.dup
     signature = png.slice! 0, 8
-    raise ArgumentError, 'invalid PNG signature' unless signature == SIGNATURE
+    raise ArgumentError, 'Invalid PNG signature' unless signature == SIGNATURE
 
     type, data = read_chunk png
 
-    raise ArgumentError, 'invalid PNG, no IHDR chunk' unless type == 'IHDR'
+    raise ArgumentError, 'Invalid PNG, no IHDR chunk' unless type == 'IHDR'
 
     canvas = read_IHDR data
     type, data = read_chunk png
@@ -154,7 +153,7 @@ class PNG
 
   def self.check_crc(type, data, crc)
     return true if (type + data).png_crc == crc
-    raise ArgumentError, "invalid CRC encountered in #{type} chunk" 
+    raise ArgumentError, "Invalid CRC encountered in #{type} chunk" 
   end
 
   def self.paeth(a, b, c) # left, above, upper left
@@ -225,7 +224,7 @@ class PNG
           #p [byte, paeth, row_data[index]]
         end
       else
-        raise ArgumentError, "invalid filter algorithm #{filter}"
+        raise ArgumentError, "Invalid filter algorithm #{filter}"
       end
 
       col = 0
@@ -272,7 +271,18 @@ class PNG
                       [@width, @height, @bits, 6, 0, 0, 0 ].pack("N2C5"))
     # 0 == filter type code "none"
     data = @data.map { |row| [0] + row.map { |p| p.values } }.fast_flatten
-    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data.fast_pack, 9))
+
+# 1)
+#    data = @data.map { |row| "\0" < row.map { |p| p.values.pack("C*") }.join }
+
+# 2)
+#    format_str = "%c%c%c%c"
+#    data = @data.map { |row| "\0" < row.map { |p| format_str % p.values }.join }
+
+# 3) - but causes bus error - and regular flatten fails tests
+#    data = @data.map { |row| [0] + row.map { |p| p.values_str } }.fast_flatten
+
+    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data.fast_pack))
     blob << PNG.chunk('IEND', '')
     blob.join
   end
@@ -284,28 +294,39 @@ class PNG
 
     attr_reader :values
 
+    def self.from str, name = nil
+      str = "%08x" % str if Integer === str
+      colors = str.scan(/[\da-f][\da-f]/i).map { |n| n.hex }
+      colors << name
+      self.new(*colors)
+    end
+
     ##
     # Creates a new color with values +red+, +green+, +blue+, and +alpha+.
 
-    def initialize(red, green, blue, alpha)
+    def initialize(red, green, blue, alpha, name = nil)
       @values = [red, green, blue, alpha]
+      # @values = "%c%c%c%c" % [red, green, blue, alpha]
+      @name = name
     end
 
     ##
     # Transparent white
 
-    Background = Color.new 0xFF, 0xFF, 0xFF, 0x00
- 
-    White      = Color.new 0xFF, 0xFF, 0xFF, 0xFF
-    Black      = Color.new 0x00, 0x00, 0x00, 0xFF
-    Gray       = Color.new 0x7F, 0x7F, 0x7F, 0xFF
-
-    Red        = Color.new 0xFF, 0x00, 0x00, 0xFF
-    Orange     = Color.new 0xFF, 0xA5, 0x00, 0xFF
-    Yellow     = Color.new 0xFF, 0xFF, 0x00, 0xFF
-    Green      = Color.new 0x00, 0xFF, 0x00, 0xFF
-    Blue       = Color.new 0x00, 0x00, 0xFF, 0xFF
-    Purple     = Color.new 0XFF, 0x00, 0xFF, 0xFF
+    Background = Color.from 0x00000000, "Transparent"
+    Black      = Color.from 0x000000FF, "Black"
+    Blue       = Color.from 0x0000FFFF, "Blue"
+    Brown      = Color.from 0x996633FF, "Brown"
+    Bubblegum  = Color.from 0xFF66FFFF, "Bubblegum"
+    Cyan       = Color.from 0x00FFFFFF, "Cyan"
+    Gray       = Color.from 0x7F7F7FFF, "Gray"
+    Green      = Color.from 0x00FF00FF, "Green"
+    Magenta    = Color.from 0xFF00FFFF, "Magenta"
+    Orange     = Color.from 0xFF7F00FF, "Orange"
+    Purple     = Color.from 0x7F007FFF, "Purple"
+    Red        = Color.from 0xFF0000FF, "Red"
+    White      = Color.from 0xFFFFFFFF, "White"
+    Yellow     = Color.from 0xFFFF00FF, "Yellow"
 
     def ==(other) # :nodoc:
       self.class === other and other.values == values
@@ -349,7 +370,11 @@ class PNG
     end
 
     def inspect # :nodoc:
-      "#<%s %02x %02x %02x %02x>" % [self.class, *@values]
+      if @name then
+        "#<%s %s>" % [self.class, @name]
+      else
+        "#<%s %02x %02x %02x %02x>" % [self.class, r, g, b, a]
+      end
     end
 
     ##
@@ -357,6 +382,7 @@ class PNG
     # art!
 
     def to_ascii
+      return '  ' if a == 0x00
       brightness = (((r + g + b) / 3) * a) / 0xFF
       return '00' if brightness >= 0xc0
       return '++' if brightness >= 0x7F
@@ -364,6 +390,13 @@ class PNG
       return '..'
     end
 
+    def to_s
+      if @name then
+        @name
+      else
+        super
+      end
+    end
   end
 
   ##
@@ -386,19 +419,19 @@ class PNG
 
     attr_reader :data
 
-    def initialize(height, width, background = Color::White)
-      @height = height
+    def initialize(width, height, background = Color::Background)
       @width = width
-      @data = Array.new(@width) { |x| Array.new(@height) { background } }
+      @height = height
+      @data = Array.new(@height) { |x| Array.new(@width, background) }
     end
 
     ##
     # Retrieves the color of the pixel at (+x+, +y+).
 
     def [](x, y)
-      raise "bad x value #{x} >= #{@height}" if x >= @height
-      raise "bad y value #{y} >= #{@width}" if y >= @width
-      @data[x][y]
+      raise "bad x value #{x} >= #{@width}" if x >= @width
+      raise "bad y value #{y} >= #{@height}" if y >= @height
+      @data[@width-y-1][x]
     end
 
     ##
@@ -407,18 +440,7 @@ class PNG
     def []=(x, y, color)
       raise "bad x value #{x} >= #{@width}" if x >= @width
       raise "bad y value #{y} >= #{@height}"  if y >= @height
-      @data[x][y] = color
-    end
-
-    ##
-    # Iterates over each pixel in the canvas.
-
-    def each
-      @data.each_with_index do |row, y|
-        row.each_with_index do |color, x|
-          yield x, y, color
-        end
-      end
+      @data[@width-y-1][x] = color
     end
 
     def inspect # :nodoc:
@@ -438,9 +460,10 @@ class PNG
     # http://en.wikipedia.org/wiki/Xiaolin_Wu's_line_algorithm
 
     def line(x0, y0, x1, y1, color)
+      y0, y1, x0, x1 = y1, y0, x1, x0 if y0 > y1
       dx = x1 - x0
       sx = dx < 0 ? -1 : 1
-      dx *= sx # TODO: abs?
+      dx *= sx
       dy = y1 - y0
 
       # 'easy' cases
@@ -459,7 +482,7 @@ class PNG
       end
 
       if dx == dy then
-        Range.new(*[x0,x1].sort).each do |x|
+        x0.step(x1, sx) do |x|
           point(x, y0, color)
           y0 += 1
         end
@@ -473,7 +496,7 @@ class PNG
         e = (dx << 16) / dy
         (y0...y1-1).each do |i|
           e_acc_temp, e_acc = e_acc, (e_acc + e) & 0xFFFF
-          x0 = x0 + sx if (e_acc <= e_acc_temp) 
+          x0 = x0 + sx if (e_acc <= e_acc_temp)
           w = 0xFF-(e_acc >> 8)
           point(x0, y0, color.intensity(w))
           y0 = y0 + 1
@@ -485,7 +508,7 @@ class PNG
 
       # horizontal displacement
       e = (dy << 16) / dx
-      (x0...(x1-sx)).each do |i|
+      (dx - 1).downto(0) do |i|
         e_acc_temp, e_acc = e_acc, (e_acc + e) & 0xFFFF
         y0 += 1 if (e_acc <= e_acc_temp)
         w = 0xFF-(e_acc >> 8)
@@ -514,8 +537,6 @@ class PNG
 
       return image.join
     end
-
   end
-
 end
 
