@@ -1,6 +1,5 @@
 require 'test/unit'
 require 'rubygems'
-require 'test/zentest_assertions'
 require 'png'
 require 'png/pie'
 

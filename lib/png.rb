@@ -1,30 +1,52 @@
+begin; require 'rubygems'; rescue LoadError; end
 require 'zlib'
-require 'enumerator'
+require 'inline'
 
 class String # :nodoc: # ZenTest SKIP
-
-  unless defined? @@crc then
-    @@crc = Array.new(256)
-    256.times do |n|
-      c = n
-      8.times do
-        c = (c & 1 == 1) ? 0xedb88320 ^ (c >> 1) : c >> 1
-      end
-      @@crc[n] = c
-    end
-  end
 
   ##
   # Calculates a CRC using the algorithm in the PNG specification.
 
-  def png_crc
-    c = 0xffffffff
-    each_byte do |b|
-      c = @@crc[(c^b) & 0xff] ^ (c >> 8)
+  inline do |builder|
+    if RUBY_VERSION < "1.8.6" then
+      builder.prefix <<-EOM
+        #define RSTRING_PTR(s) (RSTRING(s)->ptr)
+        #define RSTRING_LEN(s) (RSTRING(s)->len)
+      EOM
     end
-    return c ^ 0xffffffff
-  end
 
+    builder.c <<-EOM
+      unsigned long png_crc() {
+        static unsigned long crc[256];
+        static char crc_table_computed = 0;
+      
+        if (! crc_table_computed) {
+          unsigned long c;
+          int n, k;
+        
+          for (n = 0; n < 256; n++) {
+            c = (unsigned long) n;
+            for (k = 0; k < 8; k++) {
+              c = (c & 1) ? 0xedb88320L ^ (c >> 1) : c >> 1;
+            }
+            crc[n] = c;
+          }
+          crc_table_computed = 1;
+        }
+
+        unsigned long c = 0xffffffff;
+        unsigned len = RSTRING_LEN(self);
+        char * s = StringValuePtr(self);
+        unsigned i;
+
+        for (i = 0; i < len; i++) {
+          c = crc[(c ^ s[i]) & 0xff] ^ (c >> 8);
+        }
+
+        return c ^ 0xffffffff;
+      }
+    EOM
+  end
 end
 
 ##
@@ -54,6 +76,43 @@ class PNG
 
   SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*")
 
+  inline do |builder|
+    if RUBY_VERSION < "1.8.6" then
+      builder.prefix <<-EOM
+        #define RARRAY_PTR(s) (RARRAY(s)->ptr)
+        #define RARRAY_LEN(s) (RARRAY(s)->len)
+      EOM
+    end
+
+    # C equivalent of:
+    # @data.map { |row| "\0" + row.map { |p| p.values }.join }.join
+    builder.c <<-EOM
+      VALUE png_join() {
+        int i, j;
+        VALUE data = rb_iv_get(self, "@data");
+        unsigned int data_len = RARRAY_LEN(data);
+        unsigned int row_len = RARRAY_LEN(RARRAY_PTR(data)[0]);
+        unsigned long size = data_len * (1 + (row_len * 4));
+        char * result = malloc(size);
+        unsigned long idx = 0;
+        for (i = 0; i < data_len; i++) {
+          VALUE row = RARRAY_PTR(data)[i];
+          result[idx++] = 0;
+          for (j = 0; j < row_len; j++) {
+            VALUE color = RARRAY_PTR(row)[j];
+            VALUE values = rb_iv_get(color, "@values");
+            char * value = StringValuePtr(values);
+            result[idx++] = value[0];
+            result[idx++] = value[1];
+            result[idx++] = value[2];
+            result[idx++] = value[3];
+          }          
+        }
+        return rb_str_new(result, size);
+      }
+    EOM
+  end
+
   ##
   # Creates a PNG chunk of type +type+ that contains +data+.
 
@@ -81,7 +140,7 @@ class PNG
 
   def self.check_crc(type, data, crc)
     return true if (type + data).png_crc == crc
-    raise ArgumentError, "Invalid CRC encountered in #{type} chunk" 
+    raise ArgumentError, "Invalid CRC encountered in #{type} chunk"
   end
 
   def self.paeth(a, b, c) # left, above, upper left
@@ -197,8 +256,8 @@ class PNG
     blob << SIGNATURE
     blob << PNG.chunk('IHDR', [@width, @height, @bits, 6, 0, 0, 0 ].pack("N2C5"))
     # 0 == filter type code "none"
-    data = @data.map { |row| "\0" + row.map { |p| p.values }.join }
-    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data.join))
+    data = self.png_join
+    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data))
     blob << PNG.chunk('IEND', '')
     blob.join
   end
@@ -454,4 +513,3 @@ class PNG
     end
   end
 end
-
