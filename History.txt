@@ -1,16 +1,18 @@
-= 1.1.0
+*** 1.1.0 / 2007-03-26
 
-* Fixed bug in PNG::Canvas#each
-* Patch from Tom Werner
-  * Added PNG::Canvas#inpsect
-  * Added PNG::Canvas#to_s
-  * Added PNG::Color#to_ascii
-* Sped up PNG#to_blob with RubyInline
-* Basic PNG loading
-* Switched to Hoe
-* PNG.pie_chart from png/pie
++ 4 major enhancements:
+    + Fixed and incorporated Dominik Barathon's optimizations.
+    + Wrote inline methods for png_crc and png_join.
+    + Basic PNG loading.
+    + Reoriented x/y origin to bottom left. This will break things!
++ 3 minor enhancements:
+    + Awesome ascii art patches from Tom Werner: Canvas#inpsect, Canvas#to_s, Color#to_ascii.
+    + Switched to Hoe.
+    + PNG.pie_chart from png/pie.
++ 1 bug fix:
+    + Fixed bug in PNG::Canvas#each.
 
-= 1.0.0
+*** 1.0.0 / 2006-09-31
 
-* Birthday!
++ Birthday!
 

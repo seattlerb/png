@@ -74,6 +74,7 @@ end
 
 class PNG
 
+  VERSION = '1.1.0'
   SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*")
 
   inline do |builder|

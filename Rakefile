@@ -1,6 +1,7 @@
 require 'hoe'
+require './lib/png.rb'
 
-Hoe.new 'png', '1.1.0' do |s|
+Hoe.new 'png', PNG::VERSION do |s|
   s.summary = 'An almost-pure-ruby PNG library'
   s.description = 'png allows you to write a PNG file without installing any C libraries.  Also, stupid-simple PNG pie charts.'
   s.author = 'Ryan Davis'
