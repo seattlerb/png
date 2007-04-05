@@ -1,6 +1,7 @@
 require 'test/unit'
 require 'rubygems'
 require 'png'
+require 'png/reader'
 require 'png/pie'
 
 class TestPng < Test::Unit::TestCase
@@ -340,6 +341,16 @@ class TestPng::TestColor < Test::Unit::TestCase
   def test_to_s
     obj = PNG::Color.new(255,255,255,  0)
     assert_equal '#<PNG::Color:0xXXXXXX>', obj.to_s.sub(/0x[0-9a-f]+/, '0xXXXXXX')
+  end
+
+  def test_equals2
+    assert_equal PNG::Color.new(255,255,255,  0), PNG::Color.new(255,255,255,  0)
+  end
+
+  def test_hash
+    a = PNG::Color.new(255,255,255,  0)
+    b = PNG::Color.new(255,255,255,  0)
+    assert_equal a.hash, b.hash
   end
 
 #   def test_values

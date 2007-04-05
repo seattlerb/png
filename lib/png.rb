@@ -121,116 +121,6 @@ class PNG
     [data.size, type, data, (type + data).png_crc].pack("Na*a*N")
   end
 
-  def self.load(png)
-    png = png.dup
-    signature = png.slice! 0, 8
-    raise ArgumentError, 'Invalid PNG signature' unless signature == SIGNATURE
-
-    type, data = read_chunk png
-
-    raise ArgumentError, 'Invalid PNG, no IHDR chunk' unless type == 'IHDR'
-
-    canvas = read_IHDR data
-    type, data = read_chunk png
-    read_IDAT data, canvas
-    type, data = read_chunk png
-    raise 'oh no! IEND not next? crashing and burning!' unless type == 'IEND'
-
-    new canvas
-  end
-
-  def self.check_crc(type, data, crc)
-    return true if (type + data).png_crc == crc
-    raise ArgumentError, "Invalid CRC encountered in #{type} chunk"
-  end
-
-  def self.paeth(a, b, c) # left, above, upper left
-    p = a + b - c
-    pa = (p - a).abs
-    pb = (p - b).abs
-    pc = (p - c).abs
-
-    return a if pa <= pb && pa <= pc
-    return b if pb <= pc
-    c
-  end
-
-  def self.read_chunk(png)
-    size, type = png.slice!(0, 8).unpack 'Na4'
-    data, crc = png.slice!(0, size + 4).unpack "a#{size}N"
-
-    check_crc type, data, crc
-
-    return type, data
-  end
-
-  def self.read_IDAT(data, canvas)
-    data = Zlib::Inflate.inflate(data).unpack 'C*'
-    scanline_length = 4 * canvas.width + 1 # for filter
-    row = 0
-    until data.empty? do
-      row_data = data.slice! 0, scanline_length
-      filter = row_data.shift
-      case filter
-      when 0 then # None
-      when 1 then # Sub
-        row_data.each_with_index do |byte, index|
-          left = index < 4 ? 0 : row_data[index - 4]
-          row_data[index] = (byte + left) % 256
-          #p [byte, left, row_data[index]]
-        end
-      when 2 then # Up
-        row_data.each_with_index do |byte, index|
-          col = index / 4
-          upper = row == 0 ? 0 : canvas[col, row - 1].values[index % 4]
-          row_data[index] = (upper + byte) % 256
-        end
-      when 3 then # Average
-        row_data.each_with_index do |byte, index|
-          col = index / 4
-          upper = row == 0 ? 0 : canvas[col, row - 1].values[index % 4]
-          left = index < 4 ? 0 : row_data[index - 4]
-
-          row_data[index] = (byte + ((left + upper)/2).floor) % 256
-        end
-      when 4 then # Paeth
-        left = upper = upper_left = nil
-        row_data.each_with_index do |byte, index|
-          col = index / 4
-
-          left = index < 4 ? 0 : row_data[index - 4]
-          if row == 0 then
-            upper = upper_left = 0
-          else
-            upper = canvas[col, row - 1].values[index % 4]
-            upper_left = col == 0 ? 0 :
-                           canvas[col - 1, row - 1].values[index % 4]
-          end
-
-          paeth = paeth left, upper, upper_left
-          row_data[index] = (byte + paeth) % 256
-          #p [byte, paeth, row_data[index]]
-        end
-      else
-        raise ArgumentError, "Invalid filter algorithm #{filter}"
-      end
-
-      col = 0
-      row_data.each_slice 4 do |slice|
-        canvas[col, row] = PNG::Color.new(*slice)
-        col += 1
-      end
-
-      row += 1
-    end
-  end
-
-  def self.read_IHDR(data)
-    width, height, *rest = data.unpack 'N2C5'
-    raise ArgumentError, 'unsupported PNG file' unless rest == [8, 6, 0, 0, 0]
-    return PNG::Canvas.new(height, width)
-  end
-
   ##
   # Creates a new PNG object using +canvas+
 
@@ -305,6 +195,12 @@ class PNG
 
     def ==(other) # :nodoc:
       self.class === other and other.values == values
+    end
+
+    alias :eql? :==
+
+    def hash # :nodoc:
+      self.values.hash
     end
 
     ##
