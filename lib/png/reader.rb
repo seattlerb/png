@@ -8,12 +8,20 @@ class PNG
   GRAYA   = 4 # DEPTH = 8,16
   RGBA    = 6 # DEPTH = 8,16
 
-  def self.load(png)
+  def self.load(png, metadata_only = false)
     png = png.dup
     signature = png.slice! 0, 8
     raise ArgumentError, 'Invalid PNG signature' unless signature == SIGNATURE
 
-    bit_depth, color_type, canvas = read_IHDR read_chunk('IHDR', png)
+    ihdr = read_chunk 'IHDR', png
+
+    if metadata_only then
+      width, height, bit_depth, = data.unpack 'N2C5'
+      return [width, height, bit_depth]
+    else
+      bit_depth, color_type, canvas = read_IHDR ihdr
+    end
+
     read_IDAT read_chunk('IDAT', png), bit_depth, color_type, canvas
     read_chunk('IEND', png)
 
