@@ -2,12 +2,6 @@ require 'png'
 require 'enumerator'
 
 class PNG
-  GRAY    = 0 # DEPTH = 1,2,4,8,16
-  RGB     = 2 # DEPTH = 8,16
-  INDEXED = 3 # DEPTH = 1,2,4,8
-  GRAYA   = 4 # DEPTH = 8,16
-  RGBA    = 6 # DEPTH = 8,16
-
   def self.load(png, metadata_only = false)
     png = png.dup
     signature = png.slice! 0, 8
@@ -21,6 +15,9 @@ class PNG
     else
       bit_depth, color_type, canvas = read_IHDR ihdr
     end
+
+    type = png.slice(4, 4).unpack('a4').first
+    read_chunk(type, png) if type == 'iCCP' # Ignore color profile
 
     read_IDAT read_chunk('IDAT', png), bit_depth, color_type, canvas
     read_chunk('IEND', png)
@@ -68,21 +65,22 @@ class PNG
     row = canvas.height - 1
     until data.empty? do
       row_data = data.slice! 0, scanline_length
+
       filter = row_data.shift
       case filter
-      when 0 then # None
-      when 1 then # Sub
+      when NONE then
+      when SUB then
         row_data.each_with_index do |byte, index|
           left = index < pixel_size ? 0 : row_data[index - pixel_size]
           row_data[index] = (byte + left) % 256
         end
-      when 2 then # Up
+      when UP then
         row_data.each_with_index do |byte, index|
           col = index / pixel_size
           upper = row == 0 ? 0 : canvas[col, row + 1].values[index % pixel_size]
           row_data[index] = (upper + byte) % 256
         end
-      when 3 then # Average
+      when AVG then
         row_data.each_with_index do |byte, index|
           col = index / pixel_size
           upper = row == 0 ? 0 : canvas[col, row + 1].values[index % pixel_size]
@@ -90,7 +88,7 @@ class PNG
 
           row_data[index] = (byte + ((left + upper)/2).floor) % 256
         end
-      when 4 then # Paeth
+      when PAETH then
         left = upper = upper_left = nil
         row_data.each_with_index do |byte, index|
           col = index / pixel_size

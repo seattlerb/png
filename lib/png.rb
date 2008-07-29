@@ -1,4 +1,4 @@
-begin; require 'rubygems'; rescue LoadError; end
+require 'rubygems'
 require 'zlib'
 require 'inline'
 
@@ -77,6 +77,20 @@ class PNG
   VERSION = '1.1.0'
   SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*")
 
+  # Color Types:
+  GRAY    = 0 # DEPTH = 1,2,4,8,16
+  RGB     = 2 # DEPTH = 8,16
+  INDEXED = 3 # DEPTH = 1,2,4,8
+  GRAYA   = 4 # DEPTH = 8,16
+  RGBA    = 6 # DEPTH = 8,16
+
+  # Filter Types:
+  NONE    = 0
+  SUB     = 1
+  UP      = 2
+  AVG     = 3
+  PAETH   = 4
+
   inline do |builder|
     if RUBY_VERSION < "1.8.6" then
       builder.prefix <<-EOM
@@ -135,7 +149,9 @@ class PNG
   # Writes the PNG to +path+.
 
   def save(path)
-    File.open path, 'wb' do |f| f.write to_blob end
+    File.open path, 'wb' do |f|
+      f.write to_blob
+    end
   end
 
   ##
@@ -144,11 +160,11 @@ class PNG
   def to_blob
     blob = []
 
+    header = [@width, @height, @bits, RGBA, NONE, NONE, NONE]
+
     blob << SIGNATURE
-    blob << PNG.chunk('IHDR', [@width, @height, @bits, 6, 0, 0, 0 ].pack("N2C5"))
-    # 0 == filter type code "none"
-    data = self.png_join
-    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(data))
+    blob << PNG.chunk('IHDR', header.pack("N2C5"))
+    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(self.png_join))
     blob << PNG.chunk('IEND', '')
     blob.join
   end
@@ -157,6 +173,8 @@ class PNG
   # RGBA colors
 
   class Color
+
+    MAX=255
 
     attr_reader :values
 
@@ -170,7 +188,7 @@ class PNG
     ##
     # Creates a new color with values +red+, +green+, +blue+, and +alpha+.
 
-    def initialize(red, green, blue, alpha, name = nil)
+    def initialize(red, green, blue, alpha=MAX, name = nil)
       @values = "%c%c%c%c" % [red, green, blue, alpha]
       @name = name
     end
@@ -201,6 +219,10 @@ class PNG
 
     def hash # :nodoc:
       self.values.hash
+    end
+
+    def rgb
+      return @values[0], @values[1], @values[2]
     end
 
     ##
@@ -268,6 +290,62 @@ class PNG
         super
       end
     end
+
+    def self.from_hsv(h, s, v)
+      r = g = b = v # gray
+      unless s == 0.0 then
+        h += 255 if h < 0
+        h  = h / 255.0 * 6.0
+        s  = s / 255.0
+        v  = v / 255.0
+        i  = h.floor
+        f  = h - i
+        p = v * (1 - (s))
+        q = v * (1 - (s * (f)))
+        w = v * (1 - (s * (1-f)))
+        r, g, b = case i
+                  when 0,6 then
+                    [ v, w, p ]
+                  when 1 then
+                    [ q, v, p ]
+                  when 2 then
+                    [ p, v, w ]
+                  when 3 then
+                    [ p, q, v ]
+                  when 4 then
+                    [ w, p, v ]
+                  when 5 then
+                    [ v, p, q ]
+                  else
+                    raise [h, s, v, i, f, p, q, w].inspect
+                  end
+      end
+      self.new((r * 255).round, (g * 255).round, (b * 255).round)
+    end
+
+    def to_hsv # errors = 54230 out of 255^3 are off by about 1 on r, g, or b
+      rgb = self.rgb
+      r, g, b = rgb
+      h, s, v = 0, 0, rgb.max
+
+      return h, s, v if v == 0
+
+      range = v - rgb.min
+      s = 255 * range / v
+
+      return h, s, v if s == 0
+
+      h = case v
+          when r then
+            0x00 + 43 * (g - b) / range # 43 = 1/4 of 360 scaled to 255
+          when g then
+            0x55 + 43 * (b - r) / range
+          else
+            0xAA + 43 * (r - g) / range
+          end
+
+      return h.round, s.round, v.round
+    end
   end
 
   ##
@@ -311,6 +389,7 @@ class PNG
     def []=(x, y, color)
       raise "bad x value #{x} >= #{@width}" if x >= @width
       raise "bad y value #{y} >= #{@height}"  if y >= @height
+      raise "bad color #{color.inspect}" unless color.kind_of? PNG::Color
       @data[@height-y-1][x] = color
     end
 
