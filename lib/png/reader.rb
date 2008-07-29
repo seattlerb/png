@@ -9,12 +9,11 @@ class PNG
 
     ihdr = read_chunk 'IHDR', png
 
-    if metadata_only then
-      width, height, bit_depth, = data.unpack 'N2C5'
-      return [width, height, bit_depth]
-    else
-      bit_depth, color_type, canvas = read_IHDR ihdr
-    end
+    bit_depth, color_type, width, height = read_IHDR ihdr, metadata_only
+
+    return [width, height, bit_depth] if metadata_only
+
+    canvas = PNG::Canvas.new(width, height)
 
     type = png.slice(4, 4).unpack('a4').first
     read_chunk(type, png) if type == 'iCCP' # Ignore color profile
@@ -42,16 +41,19 @@ class PNG
     raise ArgumentError, "Invalid CRC encountered in #{type} chunk"
   end
 
-  def self.read_IHDR(data)
+  def self.read_IHDR(data, metadata_only = false)
     width, height, bit_depth, color_type, *rest = data.unpack 'N2C5'
 
-    raise ArgumentError, "Wrong bit depth: #{bit_depth}" unless
-      bit_depth == 8
-    raise ArgumentError, "Wrong color type: #{color_type}" unless
-      color_type == RGBA or color_type = RGB
-    raise ArgumentError, "Unsupported options: #{rest.inspect}" unless
-      rest == [0, 0, 0]
-    return bit_depth, color_type, PNG::Canvas.new(width, height)
+    unless metadata_only then
+      raise ArgumentError, "Wrong bit depth: #{bit_depth}" unless
+        bit_depth == 8
+      raise ArgumentError, "Wrong color type: #{color_type}" unless
+        color_type == RGBA or color_type = RGB
+      raise ArgumentError, "Unsupported options: #{rest.inspect}" unless
+        rest == [0, 0, 0]
+    end
+
+    return bit_depth, color_type, width, height
   end
 
   def self.read_IDAT(data, bit_depth, color_type, canvas)

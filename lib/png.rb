@@ -91,8 +91,7 @@ end
 #   png.save 'blah.png'
 
 class PNG
-
-  VERSION = '1.1.0'
+  VERSION = '1.2.0'
   SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*")
 
   # Color Types:
@@ -368,7 +367,7 @@ class PNG
 
       return h.round, s.round, v.round
     end
-  end
+  end # Color
 
   ##
   # PNG canvas
@@ -509,5 +508,5 @@ class PNG
 
       return image.join
     end
-  end
+  end # Canvas
 end

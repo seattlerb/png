@@ -1,7 +1,6 @@
 require 'test/unit'
 require 'rubygems'
 
-require 'test/test_png'
 require 'png/reader'
 
 class TestPngReader < Test::Unit::TestCase
@@ -55,8 +54,34 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   end
 
   def test_class_read_IHDR
-    bit_depth, color_type, canvas = PNG.read_IHDR @IHDR_data
-    assert_equal 10, canvas.width
-    assert_equal 10, canvas.height
+    bit_depth, color_type, width, height = PNG.read_IHDR @IHDR_data
+    assert_equal 10, width
+    assert_equal 10, height
+  end
+
+  def test_class_load_metadata
+    png, canvas = util_png
+
+    width, height, bit_depth = PNG.load(png.to_blob, :metadata)
+
+    assert_equal 2, width
+    assert_equal 2, height
+    assert_equal 8, bit_depth
+  end
+
+  def test_class_load
+    png, canvas = util_png
+
+    new_png = PNG.load(png.to_blob)
+
+    assert_equal canvas.data, new_png.data
+  end
+
+  def util_png
+    canvas = PNG::Canvas.new 2, 2
+    canvas[0, 0] = PNG::Color::Black
+    canvas[1, 1] = PNG::Color::Black
+    png = PNG.new canvas
+    return png, canvas
   end
 end
