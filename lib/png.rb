@@ -3,10 +3,6 @@ require 'zlib'
 require 'inline'
 
 class String # :nodoc: # ZenTest SKIP
-
-  ##
-  # Calculates a CRC using the algorithm in the PNG specification.
-
   inline do |builder|
     if RUBY_VERSION < "1.8.6" then
       builder.prefix <<-EOM
@@ -19,11 +15,11 @@ class String # :nodoc: # ZenTest SKIP
       unsigned long png_crc() {
         static unsigned long crc[256];
         static char crc_table_computed = 0;
-      
+
         if (! crc_table_computed) {
           unsigned long c;
           int n, k;
-        
+
           for (n = 0; n < 256; n++) {
             c = (unsigned long) n;
             for (k = 0; k < 8; k++) {
@@ -46,6 +42,28 @@ class String # :nodoc: # ZenTest SKIP
         return c ^ 0xffffffff;
       }
     EOM
+  end
+rescue CompilationError
+  unless defined? @@crc then
+    @@crc = Array.new(256)
+    256.times do |n|
+      c = n
+      8.times do
+        c = (c & 1 == 1) ? 0xedb88320 ^ (c >> 1) : c >> 1
+      end
+      @@crc[n] = c
+    end
+  end
+
+  ##
+  # Calculates a CRC using the algorithm in the PNG specification.
+
+  def png_crc()
+    c = 0xffffffff
+    each_byte do |b|
+      c = @@crc[(c^b) & 0xff] ^ (c >> 8)
+    end
+    return c ^ 0xffffffff
   end
 end
 
@@ -91,41 +109,45 @@ class PNG
   AVG     = 3
   PAETH   = 4
 
-  inline do |builder|
-    if RUBY_VERSION < "1.8.6" then
-      builder.prefix <<-EOM
-        #define RARRAY_PTR(s) (RARRAY(s)->ptr)
-        #define RARRAY_LEN(s) (RARRAY(s)->len)
+  begin
+    inline do |builder|
+      if RUBY_VERSION < "1.8.6" then
+        builder.prefix <<-EOM
+          #define RARRAY_PTR(s) (RARRAY(s)->ptr)
+          #define RARRAY_LEN(s) (RARRAY(s)->len)
+        EOM
+      end
+
+      builder.c <<-EOM
+        VALUE png_join() {
+          int i, j;
+          VALUE data = rb_iv_get(self, "@data");
+          unsigned int data_len = RARRAY_LEN(data);
+          unsigned int row_len = RARRAY_LEN(RARRAY_PTR(data)[0]);
+          unsigned long size = data_len * (1 + (row_len * 4));
+          char * result = malloc(size);
+          unsigned long idx = 0;
+          for (i = 0; i < data_len; i++) {
+            VALUE row = RARRAY_PTR(data)[i];
+            result[idx++] = 0;
+            for (j = 0; j < row_len; j++) {
+              VALUE color = RARRAY_PTR(row)[j];
+              VALUE values = rb_iv_get(color, "@values");
+              char * value = StringValuePtr(values);
+              result[idx++] = value[0];
+              result[idx++] = value[1];
+              result[idx++] = value[2];
+              result[idx++] = value[3];
+            }
+          }
+          return rb_str_new(result, size);
+        }
       EOM
     end
-
-    # C equivalent of:
-    # @data.map { |row| "\0" + row.map { |p| p.values }.join }.join
-    builder.c <<-EOM
-      VALUE png_join() {
-        int i, j;
-        VALUE data = rb_iv_get(self, "@data");
-        unsigned int data_len = RARRAY_LEN(data);
-        unsigned int row_len = RARRAY_LEN(RARRAY_PTR(data)[0]);
-        unsigned long size = data_len * (1 + (row_len * 4));
-        char * result = malloc(size);
-        unsigned long idx = 0;
-        for (i = 0; i < data_len; i++) {
-          VALUE row = RARRAY_PTR(data)[i];
-          result[idx++] = 0;
-          for (j = 0; j < row_len; j++) {
-            VALUE color = RARRAY_PTR(row)[j];
-            VALUE values = rb_iv_get(color, "@values");
-            char * value = StringValuePtr(values);
-            result[idx++] = value[0];
-            result[idx++] = value[1];
-            result[idx++] = value[2];
-            result[idx++] = value[3];
-          }          
-        }
-        return rb_str_new(result, size);
-      }
-    EOM
+  rescue CompilationError
+    def png_join
+      @data.map { |row| "\0" + row.map { |p| p.values }.join }.join
+    end
   end
 
   ##
