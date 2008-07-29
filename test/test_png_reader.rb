@@ -4,7 +4,24 @@ require 'rubygems'
 require 'test/test_png'
 require 'png/reader'
 
-class TestPng::TestReader < TestPng
+class TestPngReader < Test::Unit::TestCase
+
+  def setup
+    @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
+    @png = PNG.new @canvas
+
+    @IHDR_length = "\000\000\000\r"
+    @IHDR_crc = "\2152\317\275"
+    @IHDR_crc_value = @IHDR_crc.unpack('N').first
+    @IHDR_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000"
+    @IHDR_chunk = "#{@IHDR_length}IHDR#{@IHDR_data}#{@IHDR_crc}"
+
+    @blob = <<-EOF.unpack('m*').first
+iVBORw0KGgoAAAANSUhEUgAAAAUAAAAKCAYAAAB8OZQwAAAAD0lEQVR4nGP4
+jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
+    EOF
+  end
+
   def test_class_check_crc
     assert PNG.check_crc('IHDR', @IHDR_data, @IHDR_crc_value)
   end

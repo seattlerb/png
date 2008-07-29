@@ -10,35 +10,21 @@ class TestPng < Test::Unit::TestCase
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
     @png = PNG.new @canvas
 
-    @IHDR_length = "\000\000\000\r"
-    @IHDR_crc = "\2152\317\275"
-    @IHDR_crc_value = @IHDR_crc.unpack('N').first
-    @IHDR_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000"
-    @IHDR_chunk = "#{@IHDR_length}IHDR#{@IHDR_data}#{@IHDR_crc}"
-
     @blob = <<-EOF.unpack('m*').first
 iVBORw0KGgoAAAANSUhEUgAAAAUAAAAKCAYAAAB8OZQwAAAAD0lEQVR4nGP4
 jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
     EOF
   end
 
-  def test_class_check_crc
-    assert PNG.check_crc('IHDR', @IHDR_data, @IHDR_crc_value)
-  end
-
-  def test_class_check_crc_exception
-    begin
-      PNG.check_crc('IHDR', @IHDR_data, @IHDR_crc_value + 1)
-    rescue ArgumentError => e
-      assert_equal "Invalid CRC encountered in IHDR chunk", e.message
-    else
-      flunk "exception wasn't raised"
-    end
-  end
-
   def test_class_chunk
     chunk = PNG.chunk 'IHDR', [10, 10, 8, 6, 0, 0, 0 ].pack('N2C5')
-    assert_equal @IHDR_chunk, chunk
+
+    header_crc = "\2152\317\275"
+    header_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000"
+    header_length = "\000\000\000\r"
+    header_chunk = "#{header_length}IHDR#{header_data}#{header_crc}"
+
+    assert_equal header_chunk, chunk
   end
 
   def test_class_chunk_empty
@@ -58,6 +44,8 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   ensure
     assert_equal 1, File.unlink(path)
   end
+
+end
 
 class TestCanvas < Test::Unit::TestCase
 
@@ -234,28 +222,6 @@ class TestCanvas < Test::Unit::TestCase
     assert_equal expected, @canvas.to_s
   end
 
-#   def test_class_read_chunk
-#     type, data = PNG.read_chunk @IHDR_chunk
-
-#     assert_equal 'IHDR', type
-#     assert_equal @IHDR_data, data
-#   end
-
-#   def test_class_read_IDAT
-#     canvas = PNG::Canvas.new 10, 10, PNG::Color::White
-
-#     data = "x\332c\370O$`\030UH_\205\000#\373\216\200"
-
-#     PNG.read_IDAT data, canvas
-
-#     assert_equal @blob, PNG.new(canvas).to_blob
-#   end
-
-#   def test_class_read_IHDR
-#     canvas = PNG.read_IHDR @IHDR_data
-#     assert_equal 10, canvas.width
-#     assert_equal 10, canvas.height
-#   end
 end
 
 class TestPng::TestColor < Test::Unit::TestCase
@@ -356,8 +322,6 @@ class TestPng::TestColor < Test::Unit::TestCase
 #   def test_values
 #     raise NotImplementedError, 'Need to write test_values'
 #   end
-end
-
 end
 
 class TestPng::TestPie < Test::Unit::TestCase
