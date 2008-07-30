@@ -117,6 +117,26 @@ class TestCanvas < Test::Unit::TestCase
     end
   end
 
+  def test_extract
+    canvas1, _ = util_composite_canvases
+
+    expected = " xxxxxxxx
+                 xxxx..xx
+                 xx00xxxx
+                 ..xxxxxx
+                          ".gsub(/ /, '')
+
+    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+
+    canvas2 = canvas1.extract(1, 1, 2, 2)
+
+    expected = " xx..
+                 00xx
+                      ".gsub(/ /, '')
+
+    assert_equal expected, canvas2.to_s.gsub(/ /, 'x')
+  end
+
   def test_index
     assert_equal PNG::Color::White, @canvas[1, 2]
     assert_same @canvas[1, 2], @canvas.data[1][2]

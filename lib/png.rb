@@ -89,6 +89,11 @@ end
 #   canvas.line 50, 50, 100, 50, PNG::Color::Blue
 #   png = PNG.new canvas
 #   png.save 'blah.png'
+#
+# = TODO:
+#
+# + Get everything orinted entirely on [x,y,h,w] with x,y origin being
+#   bottom left.
 
 class PNG
   VERSION = '1.2.0'
@@ -191,13 +196,18 @@ class PNG
   end
 
   ##
-  # RGBA colors
+  # A 32 bit RGBA color. Can be created from RGB or RGBA via #new,
+  # numeric value or hex string via #from, or HSV via #from_hsv.
 
   class Color
 
     MAX=255
 
     attr_reader :values
+
+    ##
+    # Create a new color from a string or integer value. Can take an
+    # optional name as well.
 
     def self.from str, name = nil
       str = "%08x" % str if Integer === str
@@ -209,7 +219,7 @@ class PNG
     ##
     # Creates a new color with values +red+, +green+, +blue+, and +alpha+.
 
-    def initialize(red, green, blue, alpha=MAX, name = nil)
+    def initialize red, green, blue, alpha = MAX, name = nil
       @values = "%c%c%c%c" % [red, green, blue, alpha]
       @name = name
     end
@@ -232,11 +242,15 @@ class PNG
     White      = Color.from 0xFFFFFFFF, "White"
     Yellow     = Color.from 0xFFFF00FF, "Yellow"
 
-    def ==(other) # :nodoc:
+    def == other # :nodoc:
       self.class === other and other.values == values
     end
 
     alias :eql? :==
+
+    ##
+    # "Bitwise or" as applied to colors. Background color is
+    # considered false.
 
     def | o
       self == Background ? o : self
@@ -246,7 +260,10 @@ class PNG
       self.values.hash
     end
 
-    def rgb
+    ##
+    # Return an array of RGB
+
+    def rgb # TODO: rgba?
       return @values[0], @values[1], @values[2]
     end
 
@@ -273,7 +290,7 @@ class PNG
     ##
     # Blends +color+ into this color returning a new blended color.
 
-    def blend(color)
+    def blend color
       return Color.new(((r + color.r) / 2), ((g + color.g) / 2),
                        ((b + color.b) / 2), ((a + color.a) / 2))
     end
@@ -281,7 +298,7 @@ class PNG
     ##
     # Returns a new color with an alpha value adjusted by +i+.
 
-    def intensity(i)
+    def intensity i
       return Color.new(r,g,b,(a*i) >> 8)
     end
 
@@ -304,7 +321,7 @@ class PNG
       %w(.. ,, ++ 00)[brightness / 64]
     end
 
-    def to_s
+    def to_s # :nodoc:
       if @name then
         @name
       else
@@ -312,7 +329,10 @@ class PNG
       end
     end
 
-    def self.from_hsv(h, s, v)
+    ##
+    # Creates a new RGB color from HSV equivalent values.
+
+    def self.from_hsv h, s, v
       r = g = b = v # gray
       unless s == 0.0 then
         h += 255 if h < 0
@@ -344,6 +364,9 @@ class PNG
       self.new((r * 255).round, (g * 255).round, (b * 255).round)
     end
 
+    ##
+    # Returns HSV equivalent of the current color.
+
     def to_hsv # errors = 54230 out of 255^3 are off by about 1 on r, g, or b
       rgb = self.rgb
       r, g, b = rgb
@@ -370,7 +393,8 @@ class PNG
   end # Color
 
   ##
-  # PNG canvas
+  # A canvas used for drawing images. Origin is 0, 0 in the bottom
+  # left corner.
 
   class Canvas
 
@@ -389,7 +413,7 @@ class PNG
 
     attr_reader :data
 
-    def initialize(width, height, background = Color::Background)
+    def initialize width, height, background = Color::Background
       @width = width
       @height = height
       @data = Array.new(@height) { |x| Array.new(@width, background) }
@@ -398,7 +422,7 @@ class PNG
     ##
     # Retrieves the color of the pixel at (+x+, +y+).
 
-    def [](x, y)
+    def [] x, y
       raise "bad x value #{x} >= #{@width}" if x >= @width
       raise "bad y value #{y} >= #{@height}" if y >= @height
       @data[@height-y-1][x]
@@ -407,19 +431,11 @@ class PNG
     ##
     # Sets the color of the pixel at (+x+, +y+) to +color+.
 
-    def []=(x, y, color)
+    def []= x, y, color
       raise "bad x value #{x} >= #{@width}" if x >= @width
       raise "bad y value #{y} >= #{@height}"  if y >= @height
       raise "bad color #{color.inspect}" unless color.kind_of? PNG::Color
       @data[@height-y-1][x] = color
-    end
-
-    def each
-      data.reverse.each_with_index do |row, y|
-        row.each_with_index do |color, x|
-          yield x, y, color
-        end
-      end
     end
 
     ##
@@ -435,11 +451,37 @@ class PNG
         when :overlay then
           self[x+x1, y+y1] = color | self[x+x1, y+y1]
         when :blend then
-          self.point(x+x1, y+y1, color)
+          self.point x+x1, y+y1, color
         else
           raise "unknown style for composite: #{style.inspect}"
         end
       end
+    end
+
+    ##
+    # Iterates over the canvas yielding x, y, and color.
+
+    def each
+      data.reverse.each_with_index do |row, y|
+        row.each_with_index do |color, x|
+          yield x, y, color
+        end
+      end
+    end
+
+    ##
+    # Create a new canvas copying a region of the current canvas
+
+    def extract x0, y0, x1, y1
+      canvas = Canvas.new(x1-x0+1, y1-y0+1)
+
+      (x0..x1).each_with_index do |x2, x3|
+        (y0..y1).each_with_index do |y2, y3|
+          canvas[x3, y3] = self[x2, y2]
+        end
+      end
+
+      canvas
     end
 
     def inspect # :nodoc:
