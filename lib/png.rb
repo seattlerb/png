@@ -238,6 +238,10 @@ class PNG
 
     alias :eql? :==
 
+    def | o
+      self == Background ? o : self
+    end
+
     def hash # :nodoc:
       self.values.hash
     end
@@ -270,10 +274,8 @@ class PNG
     # Blends +color+ into this color returning a new blended color.
 
     def blend(color)
-      return Color.new((r * (0xFF - color.a) + color.r * color.a) >> 8,
-                       (g * (0xFF - color.a) + color.g * color.a) >> 8,
-                       (b * (0xFF - color.a) + color.b * color.a) >> 8,
-                       (a * (0xFF - color.a) + color.a * color.a) >> 8)
+      return Color.new(((r + color.r) / 2), ((g + color.g) / 2),
+                       ((b + color.b) / 2), ((a + color.a) / 2))
     end
 
     ##
@@ -298,10 +300,8 @@ class PNG
     def to_ascii
       return '  ' if a == 0x00
       brightness = (((r + g + b) / 3) * a) / 0xFF
-      return '00' if brightness >= 0xc0
-      return '++' if brightness >= 0x7F
-      return ',,' if brightness >= 0x40
-      return '..'
+
+      %w(.. ,, ++ 00)[brightness / 64]
     end
 
     def to_s
@@ -412,6 +412,34 @@ class PNG
       raise "bad y value #{y} >= #{@height}"  if y >= @height
       raise "bad color #{color.inspect}" unless color.kind_of? PNG::Color
       @data[@height-y-1][x] = color
+    end
+
+    def each
+      data.reverse.each_with_index do |row, y|
+        row.each_with_index do |color, x|
+          yield x, y, color
+        end
+      end
+    end
+
+    ##
+    # Composites another canvas onto self at the given (bottom left) coordinates.
+
+    def composite canvas, x, y, style = :overwrite
+      canvas.each do |x1, y1, color|
+        case style
+        when :overwrite then
+          self[x+x1, y+y1] = color
+        when :add, :underlay then
+          self[x+x1, y+y1] = self[x+x1, y+y1] | color
+        when :overlay then
+          self[x+x1, y+y1] = color | self[x+x1, y+y1]
+        when :blend then
+          self.point(x+x1, y+y1, color)
+        else
+          raise "unknown style for composite: #{style.inspect}"
+        end
+      end
     end
 
     def inspect # :nodoc:

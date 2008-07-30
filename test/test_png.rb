@@ -53,6 +53,70 @@ class TestCanvas < Test::Unit::TestCase
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
   end
 
+  def test_composite_default
+    canvas1, canvas2 = util_composite_canvases
+
+    canvas1.composite canvas2, 1, 1
+
+    expected = " xxxxxxxx
+                 xxxxxxxx
+                 xx..xxxx
+                 ..xxxxxx
+                          ".gsub(/ /, '')
+
+    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+  end
+
+  def test_composite_underlay
+    canvas1, canvas2 = util_composite_canvases
+
+    canvas1.composite canvas2, 1, 1, :add
+
+    expected = " xxxxxxxx
+                 xxxx..xx
+                 xx00xxxx
+                 ..xxxxxx
+                          ".gsub(/ /, '')
+
+    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+  end
+
+  def test_composite_overlay
+    canvas1, canvas2 = util_composite_canvases
+
+    canvas1.composite canvas2, 1, 1, :overlay
+
+    expected = " xxxxxxxx
+                 xxxx..xx
+                 xx..xxxx
+                 ..xxxxxx
+                          ".gsub(/ /, '')
+
+    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+  end
+
+  def test_composite_blend
+    canvas1, canvas2 = util_composite_canvases
+
+    canvas1.composite canvas2, 1, 1, :blend
+
+    expected = " xxxxxxxx
+                 xxxx..xx
+                 xx,,xxxx
+                 ..xxxxxx
+                          ".gsub(/ /, '')
+
+    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+  end
+
+  def test_composite_bad_style
+    canvas1, canvas2 = util_composite_canvases
+
+    assert_raises RuntimeError do
+      canvas1.composite canvas2, 1, 1, :bad
+    end
+  end
+
   def test_index
     assert_equal PNG::Color::White, @canvas[1, 2]
     assert_same @canvas[1, 2], @canvas.data[1][2]
@@ -151,7 +215,7 @@ class TestCanvas < Test::Unit::TestCase
   end
 
   def test_point
-    assert_equal PNG::Color.new(0xfe, 0x00, 0xfe, 0xfe),
+    assert_equal PNG::Color.new(0xff, 0x7f, 0xff, 0xff),
                  @canvas.point(0, 0, PNG::Color::Magenta)
     # flunk "this doesn't test ANYTHING"
   end
@@ -160,15 +224,15 @@ class TestCanvas < Test::Unit::TestCase
     @canvas.line 0, 9, 4, 0, PNG::Color::Black
 
     expected = <<-EOF
-..00000000
 ,,00000000
-00,,000000
+,,00000000
+,,,,000000
 00..000000
-00++++0000
+00,,,,0000
 0000..0000
-0000++++00
+0000,,,,00
 000000..00
-000000,,00
+000000,,,,
 00000000..
     EOF
 
@@ -179,23 +243,19 @@ class TestCanvas < Test::Unit::TestCase
     @canvas.line 0, 0, 4, 9, PNG::Color::Black
 
     expected = <<-EOF
-00000000..
 00000000,,
-000000,,00
+00000000,,
+000000,,,,
 000000..00
-0000++++00
+0000,,,,00
 0000..0000
-00++++0000
+00,,,,0000
 00..000000
-00,,000000
+,,,,000000
 ..00000000
     EOF
 
     assert_equal expected, @canvas.to_s
-  end
-
-  def util_ascii_art(width, height)
-    (("0" * width * 2) + "\n") * height
   end
 
   def test_to_s_normal
@@ -222,6 +282,36 @@ class TestCanvas < Test::Unit::TestCase
     assert_equal expected, @canvas.to_s
   end
 
+  def util_composite_canvases
+    canvas1 = PNG::Canvas.new 4, 4
+    canvas1[0, 0] = PNG::Color::Black
+    canvas1[1, 1] = PNG::Color::White
+    canvas1[2, 2] = PNG::Color::Black
+
+    expected = " xxxxxxxx
+                 xxxx..xx
+                 xx00xxxx
+                 ..xxxxxx
+                          ".gsub(/ /, '')
+
+    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+
+
+    canvas2 = PNG::Canvas.new 2, 2
+    canvas2[0, 0] = PNG::Color::Black
+
+    expected = " xxxx 
+                 ..xx
+                      ".gsub(/ /, '')
+
+    assert_equal expected, canvas2.to_s.gsub(/ /, 'x')
+
+    return canvas1, canvas2
+  end
+
+  def util_ascii_art(width, height)
+    (("0" * width * 2) + "\n") * height
+  end
 end
 
 class TestPng::TestColor < Test::Unit::TestCase
@@ -262,10 +352,16 @@ class TestPng::TestColor < Test::Unit::TestCase
   end
 
   def test_blend
-    c1 = @color
-    c2 = PNG::Color.new 0xFF, 0xFE, 0xFD, 0xFC
+#     c1 = @color
+#     c2 = PNG::Color.new 0xFF, 0xFE, 0xFD, 0xFC
 
-    assert_equal PNG::Color.new(0xfb, 0xfa, 0xf9, 0xf8), c1.blend(c2)
+#     assert_equal PNG::Color.new(0xFB, 0xFA, 0xF9, 0xF8), c1.blend(c2)
+
+    c1 = PNG::Color::White
+    c2 = PNG::Color::Black
+
+    assert_equal PNG::Color::Gray, c2.blend(c1)
+    assert_equal PNG::Color::Gray, c1.blend(c2)
   end
 
   def test_intensity
@@ -280,6 +376,21 @@ class TestPng::TestColor < Test::Unit::TestCase
     assert_equal "#<PNG::Color Red>", PNG::Color::Red.inspect
   end
 
+  def test_pipe
+    b = PNG::Color::Black
+    w = PNG::Color::White
+    t = PNG::Color::Background
+
+    # first non-transparent
+    assert_equal b, b | t
+    assert_equal b, t | b
+
+    assert_equal b, b | w
+    assert_equal w, w | b
+
+    assert_equal t, t | t
+  end
+
   def test_to_ascii
     assert_equal '00', PNG::Color::White.to_ascii, "white"
     assert_equal '++', PNG::Color::Yellow.to_ascii, "yellow"
@@ -292,7 +403,7 @@ class TestPng::TestColor < Test::Unit::TestCase
     assert_equal '00', PNG::Color.new(255,255,255,255).to_ascii
     assert_equal '00', PNG::Color.new(255,255,255,192).to_ascii
     assert_equal '++', PNG::Color.new(255,255,255,191).to_ascii
-    assert_equal '++', PNG::Color.new(255,255,255,127).to_ascii
+    assert_equal ',,', PNG::Color.new(255,255,255,127).to_ascii
     assert_equal ',,', PNG::Color.new(255,255,255,126).to_ascii
     assert_equal ',,', PNG::Color.new(255,255,255, 64).to_ascii
     assert_equal '..', PNG::Color.new(255,255,255, 63).to_ascii
