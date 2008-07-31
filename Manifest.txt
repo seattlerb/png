@@ -6,5 +6,8 @@ example/lines.rb
 example/profile.rb
 example/profile_lines.rb
 lib/png.rb
+lib/png/default_font.png
+lib/png/font.rb
 lib/png/pie.rb
+lib/png/reader.rb
 test/test_png.rb

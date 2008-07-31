@@ -2,7 +2,11 @@ require 'png'
 require 'enumerator'
 
 class PNG
-  def self.load(png, metadata_only = false)
+  def self.load_file path, metadata_only = false
+    self.load File.read(path), metadata_only
+  end
+
+  def self.load png, metadata_only = false
     png = png.dup
     signature = png.slice! 0, 8
     raise ArgumentError, 'Invalid PNG signature' unless signature == SIGNATURE
@@ -13,18 +17,18 @@ class PNG
 
     return [width, height, bit_depth] if metadata_only
 
-    canvas = PNG::Canvas.new(width, height)
+    canvas = PNG::Canvas.new width, height
 
     type = png.slice(4, 4).unpack('a4').first
-    read_chunk(type, png) if type == 'iCCP' # Ignore color profile
+    read_chunk type, png if type == 'iCCP' # Ignore color profile
 
     read_IDAT read_chunk('IDAT', png), bit_depth, color_type, canvas
-    read_chunk('IEND', png)
+    read_chunk 'IEND', png
 
     canvas
   end
 
-  def self.read_chunk(expected_type, png)
+  def self.read_chunk expected_type, png
     size, type = png.slice!(0, 8).unpack 'Na4'
     data, crc = png.slice!(0, size + 4).unpack "a#{size}N"
 
@@ -36,12 +40,12 @@ class PNG
     return data
   end
 
-  def self.check_crc(type, data, crc)
+  def self.check_crc type, data, crc
     return true if (type + data).png_crc == crc
     raise ArgumentError, "Invalid CRC encountered in #{type} chunk"
   end
 
-  def self.read_IHDR(data, metadata_only = false)
+  def self.read_IHDR data, metadata_only = false
     width, height, bit_depth, color_type, *rest = data.unpack 'N2C5'
 
     unless metadata_only then
@@ -56,7 +60,7 @@ class PNG
     return bit_depth, color_type, width, height
   end
 
-  def self.read_IDAT(data, bit_depth, color_type, canvas)
+  def self.read_IDAT data, bit_depth, color_type, canvas
     data = Zlib::Inflate.inflate(data).unpack 'C*'
 
     pixel_size = color_type == RGBA ? 4 : 3
@@ -122,7 +126,7 @@ class PNG
     end
   end
 
-  def self.paeth(a, b, c) # left, above, upper left
+  def self.paeth a, b, c # left, above, upper left
     p = a + b - c
     pa = (p - a).abs
     pb = (p - b).abs
