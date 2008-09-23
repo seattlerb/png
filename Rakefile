@@ -1,8 +1,10 @@
 $: << "../../RubyInline/dev/lib"
-ENV['RUBY_FLAGS'] = "-I../../RubyInline/dev/lib:lib"
 
 require 'hoe'
 require './lib/png.rb'
+
+Hoe.add_include_dirs("../../RubyInline/dev/lib",
+                     "lib")
 
 Hoe.new 'png', PNG::VERSION do |png|
   png.rubyforge_name = 'seattlerb'
