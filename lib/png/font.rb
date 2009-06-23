@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+# encoding: BINARY
 
 require 'png/reader'
 

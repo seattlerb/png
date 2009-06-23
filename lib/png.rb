@@ -1,16 +1,17 @@
+# encoding: BINARY
+
 require 'rubygems'
 require 'zlib'
 require 'inline'
 
+unless "".respond_to? :getbyte then
+  class String
+    alias :getbyte :[]
+  end
+end
+
 class String # :nodoc: # ZenTest SKIP
   inline do |builder|
-    if RUBY_VERSION < "1.8.6" then
-      builder.prefix <<-EOM
-        #define RSTRING_PTR(s) (RSTRING(s)->ptr)
-        #define RSTRING_LEN(s) (RSTRING(s)->len)
-      EOM
-    end
-
     builder.c <<-EOM
       unsigned long png_crc() {
         static unsigned long crc[256];
@@ -31,8 +32,8 @@ class String # :nodoc: # ZenTest SKIP
         }
 
         unsigned long c = 0xffffffff;
-        unsigned len = RSTRING_LEN(self);
-        char * s = StringValuePtr(self);
+        unsigned len    = RSTRING_LEN(self);
+        char * s        = StringValuePtr(self);
         unsigned i;
 
         for (i = 0; i < len; i++) {
@@ -43,7 +44,9 @@ class String # :nodoc: # ZenTest SKIP
       }
     EOM
   end
-rescue CompilationError
+rescue CompilationError => e
+  warn "COMPLIATION ERROR: #{e}"
+
   unless defined? @@crc then
     @@crc = Array.new(256)
     256.times do |n|
@@ -264,28 +267,28 @@ class PNG
     # Return an array of RGB
 
     def rgb # TODO: rgba?
-      return @values[0], @values[1], @values[2]
+      return r, g, b
     end
 
     ##
     # Red component
 
-    def r; @values[0]; end
+    def r; @values.getbyte 0; end
 
     ##
     # Green component
 
-    def g; @values[1]; end
+    def g; @values.getbyte 1; end
 
     ##
     # Blue component
 
-    def b; @values[2]; end
+    def b; @values.getbyte 2; end
 
     ##
     # Alpha transparency component
 
-    def a; @values[3]; end
+    def a; @values.getbyte 3; end
 
     ##
     # Blends +color+ into this color returning a new blended color.
@@ -316,6 +319,7 @@ class PNG
 
     def to_ascii
       return '  ' if a == 0x00
+
       brightness = (((r + g + b) / 3) * a) / 0xFF
 
       %w(.. ,, ++ 00)[brightness / 64]

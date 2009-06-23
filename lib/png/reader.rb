@@ -1,9 +1,12 @@
+# encoding: BINARY
+
 require 'png'
 require 'enumerator'
 
 class PNG
   def self.load_file path, metadata_only = false
-    self.load File.read(path), metadata_only
+    file = File.open(path, 'rb') { |f| f.read }
+    self.load file, metadata_only
   end
 
   def self.load png, metadata_only = false

@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby -w
+# encoding: BINARY
 
 require 'png'
 
