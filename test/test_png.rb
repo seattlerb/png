@@ -1,11 +1,18 @@
-require 'test/unit'
+dir = File.expand_path "~/.ruby_inline"
+if test ?d, dir then
+  require 'fileutils'
+  puts "nuking #{dir}"
+  # force removal, Windoze is bitching at me, something to hunt later...
+  FileUtils.rm_r dir, :force => true
+end
+
+require 'minitest/autorun'
 require 'rubygems'
 require 'png'
 require 'png/reader'
 require 'png/pie'
 
-class TestPng < Test::Unit::TestCase
-
+class TestPng < MiniTest::Unit::TestCase
   def setup
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
     @png = PNG.new @canvas
@@ -40,14 +47,15 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   def test_save
     path = "blah.png"
     @png.save(path)
-    assert_equal @blob, File.read(path)
+    file = File.open(path, 'rb') { |f| f.read }
+    assert_equal @blob, file
   ensure
     assert_equal 1, File.unlink(path)
   end
 
 end
 
-class TestCanvas < Test::Unit::TestCase
+class TestCanvas < MiniTest::Unit::TestCase
 
   def setup
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
@@ -334,7 +342,7 @@ class TestCanvas < Test::Unit::TestCase
   end
 end
 
-class TestPng::TestColor < Test::Unit::TestCase
+class TestPng::TestColor < MiniTest::Unit::TestCase
   def setup
     @color = PNG::Color.new 0x01, 0x02, 0x03, 0x04
   end
@@ -455,11 +463,7 @@ class TestPng::TestColor < Test::Unit::TestCase
 #   end
 end
 
-class TestPng::TestPie < Test::Unit::TestCase
-  def setup
-
-  end
-
+class TestPng::TestPie < MiniTest::Unit::TestCase
   def test_pie_chart_odd
     expected =
       ["          ..          ",

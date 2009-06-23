@@ -1,9 +1,16 @@
-require 'test/unit'
-require 'rubygems'
+dir = File.expand_path "~/.ruby_inline"
+if test ?d, dir then
+  require 'fileutils'
+  puts "nuking #{dir}"
+  # force removal, Windoze is bitching at me, something to hunt later...
+  FileUtils.rm_r dir, :force => true
+end
 
+require 'rubygems'
+require 'minitest/autorun'
 require 'png/font'
 
-class TestPngFont < Test::Unit::TestCase
+class TestPngFont < MiniTest::Unit::TestCase
 
   def setup
     @font = PNG::Font.default
