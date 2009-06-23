@@ -1,19 +1,18 @@
 $: << "../../RubyInline/dev/lib"
+$: << "../../hoe/dev/lib"
 
 require 'hoe'
-require './lib/png.rb'
 
-Hoe.add_include_dirs("../../RubyInline/dev/lib",
-                     "lib")
+Hoe.add_include_dirs "../../hoe/dev/lib" # HACK remove
+Hoe.add_include_dirs "../../RubyInline/dev/lib", "lib"
+Hoe.plugin :seattlerb
+Hoe.plugin :inline
 
-Hoe.new 'png', PNG::VERSION do |png|
-  png.rubyforge_name = 'seattlerb'
+Hoe.spec 'png' do
+  developer 'Ryan Davis', 'ryand-ruby@zenspider.com'
+  developer 'Eric Hodel', 'drbrain@segment7.net'
 
-  png.developer('Ryan Davis', 'ryand-ruby@zenspider.com')
-  png.developer('Eric Hodel', 'drbrain@segment7.net')
-
-  png.clean_globs << File.expand_path("~/.ruby_inline")
-  png.extra_deps << ['RubyInline', '>= 3.5.0']
+  self.rubyforge_name = 'seattlerb'
 end
 
 # vim: syntax=Ruby
