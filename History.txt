@@ -1,18 +1,60 @@
-*** 1.1.0 / 2007-03-26
+=== 1.2.0 / 2009-06-23
 
-+ 4 major enhancements:
-    + Fixed and incorporated Dominik Barathon's optimizations.
-    + Wrote inline methods for png_crc and png_join. Now about 15x faster overall.
-    + Basic PNG loading.
-    + Reoriented x/y origin to bottom left. This will break things!
-+ 3 minor enhancements:
-    + Awesome ascii art patches from Tom Werner: Canvas#inpsect, Canvas#to_s, Color#to_ascii.
-    + Switched to Hoe.
-    + PNG.pie_chart from png/pie.
-+ 1 bug fix:
-    + Fixed bug in PNG::Canvas#each.
+* 26 minor enhancements:
 
-*** 1.0.0 / 2006-09-31
+  * Add load_metadata flag to PNG.load to extract dimensions and depth.
+  * Add pure-ruby versions back for png_join and png_crc.
+  * Added Canvas#composite(canvas, x, y, style) with overwrite, underlay, overlay, and blend.
+  * Added Canvas#each, passes x, y, color.
+  * Added Canvas#extract.
+  * Added Color#|, Background color is effective false.
+  * Added Font#coordinates and cached each letter when extracted.
+  * Added PNG::load_file.
+  * Added reader tests.
+  * Added tests for PNG::Font.
+  * Added tests for PNG::load.
+  * Added to/from hsv methods to Color.
+  * Clean up tests to remove duplication.
+  * Cleaned up Color#to_ascii to make much easier to read and extend.
+  * Cleaned up a fair amount of code, removing as many raw literals as possible.
+  * Color#blend is a simple averaging algorithm now.
+  * Extended reader to include RGB as well, paving the way for grayscale.
+  * Fake support for RGB as well as RGBA (default alpha to 255).
+  * Made reader work again (was flipped and all sorts of broken).
+  * Split out reader.
+  * Switched to minitest.
+  * Time to refactor PNG::Font to use #extract and #composite...
+  * Updated Rakefile to new hoe capabilities.
+  * Updated manifest.
+  * metadata_only now cleaner.
+  * read_IHDR now returns height, width instead of a canvas.
 
-+ Birthday!
+* 3 bug fixes:
+
+  * Fixed example/lines and added text.
+  * Fixes for 1.9.
+  * Ignore color profile if it exists (fixes problems on osx screenshots).
+
+=== 1.1.0 / 2007-03-26
+
+* 4 major enhancements:
+
+    * Fixed and incorporated Dominik Barathon's optimizations.
+    * Wrote inline methods for png_crc and png_join. Now about 15x faster overall.
+    * Basic PNG loading.
+    * Reoriented x/y origin to bottom left. This will break things!
+
+* 3 minor enhancements:
+
+    * Awesome ascii art patches from Tom Werner: Canvas#inpsect, Canvas#to_s, Color#to_ascii.
+    * Switched to Hoe.
+    * PNG.pie_chart from png/pie.
+
+* 1 bug fix:
+
+    * Fixed bug in PNG::Canvas#each.
+
+=== 1.0.0 / 2006-09-31
+
+* Birthday!
 
