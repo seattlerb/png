@@ -11,3 +11,6 @@ lib/png/font.rb
 lib/png/pie.rb
 lib/png/reader.rb
 test/test_png.rb
+test/test_png_font.rb
+test/test_png_reader.rb
+
