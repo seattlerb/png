@@ -3,8 +3,10 @@ $: << "../../hoe/dev/lib"
 
 require 'hoe'
 
-Hoe.add_include_dirs "../../hoe/dev/lib" # HACK remove
-Hoe.add_include_dirs "../../RubyInline/dev/lib", "lib"
+Hoe.add_include_dirs("../../RubyInline/dev/lib",
+                     "../../ZenTest/dev/lib",
+                     "lib")
+
 Hoe.plugin :seattlerb
 Hoe.plugin :inline
 
