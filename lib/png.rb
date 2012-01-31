@@ -16,6 +16,10 @@ class String # :nodoc: # ZenTest SKIP
       unsigned long png_crc() {
         static unsigned long crc[256];
         static char crc_table_computed = 0;
+        unsigned long c = 0xffffffff;
+        unsigned len    = RSTRING_LEN(self);
+        char * s        = StringValuePtr(self);
+        unsigned i;
 
         if (! crc_table_computed) {
           unsigned long c;
@@ -31,11 +35,6 @@ class String # :nodoc: # ZenTest SKIP
           crc_table_computed = 1;
         }
 
-        unsigned long c = 0xffffffff;
-        unsigned len    = RSTRING_LEN(self);
-        char * s        = StringValuePtr(self);
-        unsigned i;
-
         for (i = 0; i < len; i++) {
           c = crc[(c ^ s[i]) & 0xff] ^ (c >> 8);
         }
@@ -45,7 +44,7 @@ class String # :nodoc: # ZenTest SKIP
     EOM
   end
 rescue CompilationError => e
-  warn "COMPLIATION ERROR: #{e}"
+  warn "COMPILATION ERROR: #{e}"
 
   unless defined? @@crc then
     @@crc = Array.new(256)
