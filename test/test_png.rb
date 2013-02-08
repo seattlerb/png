@@ -1,5 +1,5 @@
 dir = File.expand_path "~/.ruby_inline"
-if test ?d, dir then
+if File.directory? dir then
   require 'fileutils'
   puts "nuking #{dir}"
   # force removal, Windoze is bitching at me, something to hunt later...
