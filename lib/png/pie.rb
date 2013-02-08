@@ -24,7 +24,6 @@ class PNG
     diameter += 1 if diameter % 2 == 0
     radius = (diameter / 2.0).to_i
     pct_in_deg = FULL * pct_green
-    rad_to_deg = HALF / Math::PI
 
     canvas = PNG::Canvas.new(diameter, diameter)
 

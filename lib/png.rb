@@ -16,6 +16,10 @@ class String # :nodoc: # ZenTest SKIP
       unsigned long png_crc() {
         static unsigned long crc[256];
         static char crc_table_computed = 0;
+        unsigned long c = 0xffffffff;
+        size_t   len    = RSTRING_LEN(self);
+        char * s        = StringValuePtr(self);
+        unsigned i;
 
         if (! crc_table_computed) {
           unsigned long c;
@@ -30,11 +34,6 @@ class String # :nodoc: # ZenTest SKIP
           }
           crc_table_computed = 1;
         }
-
-        unsigned long c = 0xffffffff;
-        unsigned len    = RSTRING_LEN(self);
-        char * s        = StringValuePtr(self);
-        unsigned i;
 
         for (i = 0; i < len; i++) {
           c = crc[(c ^ s[i]) & 0xff] ^ (c >> 8);
@@ -127,12 +126,13 @@ class PNG
 
       builder.c <<-EOM
         VALUE png_join() {
-          int i, j;
-          VALUE data = rb_iv_get(self, "@data");
-          unsigned int data_len = RARRAY_LEN(data);
-          unsigned int row_len = RARRAY_LEN(RARRAY_PTR(data)[0]);
-          unsigned long size = data_len * (1 + (row_len * 4));
-          char * result = malloc(size);
+          size_t i, j;
+          VALUE  data     = rb_iv_get(self, "@data");
+          size_t data_len = RARRAY_LEN(data);
+          size_t row_len  = RARRAY_LEN(RARRAY_PTR(data)[0]);
+          size_t size     = data_len * (1 + (row_len * 4));
+          char * result   = malloc(size);
+
           unsigned long idx = 0;
           for (i = 0; i < data_len; i++) {
             VALUE row = RARRAY_PTR(data)[i];

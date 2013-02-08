@@ -61,13 +61,13 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   end
 
   def test_class_read_IHDR
-    bit_depth, color_type, width, height = PNG.read_IHDR @IHDR_data
+    _, _, width, height = PNG.read_IHDR @IHDR_data
     assert_equal 10, width
     assert_equal 10, height
   end
 
   def test_class_load_metadata
-    png, canvas = util_png
+    png, _ = util_png
 
     width, height, bit_depth = PNG.load(png.to_blob, :metadata)
 
