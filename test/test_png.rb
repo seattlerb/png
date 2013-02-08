@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 dir = File.expand_path "~/.ruby_inline"
 if File.directory? dir then
   require 'fileutils'
