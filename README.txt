@@ -14,7 +14,7 @@ without any C libraries.
 * Basic PNG reader as well (someday it might do compositing and the like!).
 * Almost pure ruby, does require a compiler.
 
-== SYNOPSYS
+== SYNOPSIS
 
     require 'png'
     
