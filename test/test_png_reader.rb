@@ -10,7 +10,7 @@ require 'rubygems'
 require 'minitest/autorun'
 require 'png/reader'
 
-class TestPngReader < MiniTest::Unit::TestCase
+class TestPngReader < Minitest::Test
 
   def setup
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White

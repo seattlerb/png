@@ -10,7 +10,7 @@ require 'rubygems'
 require 'minitest/autorun'
 require 'png/font'
 
-class TestPngFont < MiniTest::Unit::TestCase
+class TestPngFont < Minitest::Test
 
   def setup
     @font = PNG::Font.default

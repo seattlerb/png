@@ -14,7 +14,7 @@ require 'png'
 require 'png/reader'
 require 'png/pie'
 
-class TestPng < MiniTest::Unit::TestCase
+class TestPng < Minitest::Test
   def setup
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
     @png = PNG.new @canvas
@@ -57,7 +57,7 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
 
 end
 
-class TestCanvas < MiniTest::Unit::TestCase
+class TestCanvas < Minitest::Test
 
   def setup
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
@@ -344,7 +344,7 @@ class TestCanvas < MiniTest::Unit::TestCase
   end
 end
 
-class TestPng::TestColor < MiniTest::Unit::TestCase
+class TestPng::TestColor < Minitest::Test
   def setup
     @color = PNG::Color.new 0x01, 0x02, 0x03, 0x04
   end
@@ -465,7 +465,7 @@ class TestPng::TestColor < MiniTest::Unit::TestCase
 #   end
 end
 
-class TestPng::TestPie < MiniTest::Unit::TestCase
+class TestPng::TestPie < Minitest::Test
   def test_pie_chart_odd
     expected =
       ["          ..          ",
