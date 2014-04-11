@@ -13,8 +13,6 @@ Hoe.plugin :inline
 Hoe.spec 'png' do
   developer 'Ryan Davis', 'ryand-ruby@zenspider.com'
   developer 'Eric Hodel', 'drbrain@segment7.net'
-
-  self.rubyforge_name = 'seattlerb'
 end
 
 # vim: syntax=Ruby
