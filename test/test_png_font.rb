@@ -1,14 +1,14 @@
 dir = File.expand_path "~/.ruby_inline"
 if File.directory? dir then
-  require 'fileutils'
+  require "fileutils"
   puts "nuking #{dir}"
   # force removal, Windoze is bitching at me, something to hunt later...
   FileUtils.rm_r dir, :force => true
 end
 
-require 'rubygems'
-require 'minitest/autorun'
-require 'png/font'
+require "rubygems"
+require "minitest/autorun"
+require "png/font"
 
 class TestPngFont < Minitest::Test
 
@@ -25,13 +25,13 @@ class TestPngFont < Minitest::Test
   end
 
   def test_coordinates
-    assert_equal [ 0,  0,  5,  5], @font.coordinates('(')
-    assert_equal [ 0,  6,  5, 11], @font.coordinates('0')
-    assert_equal [ 0, 12,  5, 17], @font.coordinates('a')
-    assert_equal [ 0, 18,  5, 23], @font.coordinates('A')
+    assert_equal [0,  0,  5,  5], @font.coordinates("(")
+    assert_equal [0,  6,  5, 11], @font.coordinates("0")
+    assert_equal [0, 12,  5, 17], @font.coordinates("a")
+    assert_equal [0, 18,  5, 23], @font.coordinates("A")
 
-    assert_equal [42, 12, 47, 17], @font.coordinates('h')
-    assert_equal [42, 18, 47, 23], @font.coordinates('H')
+    assert_equal [42, 12, 47, 17], @font.coordinates("h")
+    assert_equal [42, 18, 47, 23], @font.coordinates("H")
   end
 
   def test_index
@@ -44,7 +44,7 @@ class TestPngFont < Minitest::Test
 000000000000
 ".strip + "\n"
 
-    assert_equal expected, @font['A'].to_s
+    assert_equal expected, @font["A"].to_s
 
     expected = "
 00000000..00
@@ -55,11 +55,11 @@ class TestPngFont < Minitest::Test
 000000000000
 ".strip + "\n"
 
-    assert_equal expected, @font['l'].to_s
+    assert_equal expected, @font["l"].to_s
   end
 
   def test_index_identity
-    assert_same @font['A'], @font['A']
+    assert_same @font["A"], @font["A"]
   end
 
   def test_annotate

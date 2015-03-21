@@ -1,7 +1,7 @@
 $: << "../../RubyInline/dev/lib"
 $: << "../../hoe/dev/lib"
 
-require 'hoe'
+require "hoe"
 
 Hoe.add_include_dirs("../../RubyInline/dev/lib",
                      "../../ZenTest/dev/lib",
@@ -10,9 +10,8 @@ Hoe.add_include_dirs("../../RubyInline/dev/lib",
 Hoe.plugin :seattlerb
 Hoe.plugin :inline
 
-Hoe.spec 'png' do
-  developer 'Ryan Davis', 'ryand-ruby@zenspider.com'
-  developer 'Eric Hodel', 'drbrain@segment7.net'
+Hoe.spec "png" do
+  developer "Ryan Davis", "ryand-ruby@zenspider.com"
 end
 
 # vim: syntax=Ruby

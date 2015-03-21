@@ -1,20 +1,20 @@
 # encoding: BINARY
 
-require 'png'
-require 'enumerator'
+require "png"
+require "enumerator"
 
 class PNG
   def self.load_file path, metadata_only = false
-    file = File.open(path, 'rb') { |f| f.read }
+    file = File.open(path, "rb") { |f| f.read }
     self.load file, metadata_only
   end
 
   def self.load png, metadata_only = false
     png = png.dup
     signature = png.slice! 0, 8
-    raise ArgumentError, 'Invalid PNG signature' unless signature == SIGNATURE
+    raise ArgumentError, "Invalid PNG signature" unless signature == SIGNATURE
 
-    ihdr = read_chunk 'IHDR', png
+    ihdr = read_chunk "IHDR", png
 
     bit_depth, color_type, width, height = read_IHDR ihdr, metadata_only
 
@@ -22,17 +22,17 @@ class PNG
 
     canvas = PNG::Canvas.new width, height
 
-    type = png.slice(4, 4).unpack('a4').first
-    read_chunk type, png if type == 'iCCP' # Ignore color profile
+    type = png.slice(4, 4).unpack("a4").first
+    read_chunk type, png if type == "iCCP" # Ignore color profile
 
-    read_IDAT read_chunk('IDAT', png), bit_depth, color_type, canvas
-    read_chunk 'IEND', png
+    read_IDAT read_chunk("IDAT", png), bit_depth, color_type, canvas
+    read_chunk "IEND", png
 
     canvas
   end
 
   def self.read_chunk expected_type, png
-    size, type = png.slice!(0, 8).unpack 'Na4'
+    size, type = png.slice!(0, 8).unpack "Na4"
     data, crc = png.slice!(0, size + 4).unpack "a#{size}N"
 
     check_crc type, data, crc
@@ -40,7 +40,7 @@ class PNG
     raise ArgumentError, "Expected #{expected_type} chunk, not #{type}" unless
       type == expected_type
 
-    return data
+    data
   end
 
   def self.check_crc type, data, crc
@@ -49,7 +49,7 @@ class PNG
   end
 
   def self.read_IHDR data, metadata_only = false
-    width, height, bit_depth, color_type, *rest = data.unpack 'N2C5'
+    width, height, bit_depth, color_type, *rest = data.unpack "N2C5"
 
     unless metadata_only then
       raise ArgumentError, "Wrong bit depth: #{bit_depth}" unless
@@ -64,7 +64,7 @@ class PNG
   end
 
   def self.read_IDAT data, bit_depth, color_type, canvas
-    data = Zlib::Inflate.inflate(data).unpack 'C*'
+    data = Zlib::Inflate.inflate(data).unpack "C*"
 
     pixel_size = color_type == RGBA ? 4 : 3
 

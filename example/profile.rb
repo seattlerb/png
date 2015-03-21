@@ -1,4 +1,4 @@
-require 'png'
+require "png"
 
 class PNGProfile
 

@@ -1,8 +1,8 @@
 # encoding: BINARY
 
-require 'rubygems'
-require 'zlib'
-require 'inline'
+require "rubygems"
+require "zlib"
+require "inline"
 
 unless "".respond_to? :getbyte then
   class String
@@ -60,12 +60,12 @@ rescue CompilationError => e
   ##
   # Calculates a CRC using the algorithm in the PNG specification.
 
-  def png_crc()
+  def png_crc
     c = 0xffffffff
     each_byte do |b|
       c = @@crc[(c^b) & 0xff] ^ (c >> 8)
     end
-    return c ^ 0xffffffff
+    c ^ 0xffffffff
   end
 end
 
@@ -98,7 +98,7 @@ end
 #   bottom left.
 
 class PNG
-  VERSION = '1.2.0'
+  VERSION = "1.2.0"
   SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*")
 
   # Color Types:
@@ -153,21 +153,21 @@ class PNG
     end
   rescue CompilationError
     def png_join
-      @data.map { |row| "\0" + row.map { |p| p.values }.join }.join
+      @data.map { |row| "\0" + row.map(&:values).join }.join
     end
   end
 
   ##
   # Creates a PNG chunk of type +type+ that contains +data+.
 
-  def self.chunk(type, data="")
+  def self.chunk type, data = ""
     [data.size, type, data, (type + data).png_crc].pack("Na*a*N")
   end
 
   ##
   # Creates a new PNG object using +canvas+
 
-  def initialize(canvas)
+  def initialize canvas
     @height = canvas.height
     @width = canvas.width
     @bits = 8
@@ -177,8 +177,8 @@ class PNG
   ##
   # Writes the PNG to +path+.
 
-  def save(path)
-    File.open path, 'wb' do |f|
+  def save path
+    File.open path, "wb" do |f|
       f.write to_blob
     end
   end
@@ -192,9 +192,9 @@ class PNG
     header = [@width, @height, @bits, RGBA, NONE, NONE, NONE]
 
     blob << SIGNATURE
-    blob << PNG.chunk('IHDR', header.pack("N2C5"))
-    blob << PNG.chunk('IDAT', Zlib::Deflate.deflate(self.png_join))
-    blob << PNG.chunk('IEND', '')
+    blob << PNG.chunk("IHDR", header.pack("N2C5"))
+    blob << PNG.chunk("IDAT", Zlib::Deflate.deflate(self.png_join))
+    blob << PNG.chunk("IEND", "")
     blob.join
   end
 
@@ -214,7 +214,7 @@ class PNG
 
     def self.from str, name = nil
       str = "%08x" % str if Integer === str
-      colors = str.scan(/[\da-f][\da-f]/i).map { |n| n.hex }
+      colors = str.scan(/[\da-f][\da-f]/i).map(&:hex)
       colors << name
       self.new(*colors)
     end
@@ -255,8 +255,8 @@ class PNG
     # "Bitwise or" as applied to colors. Background color is
     # considered false.
 
-    def | o
-      self == Background ? o : self
+    def | other
+      self == Background ? other : self
     end
 
     def hash # :nodoc:
@@ -294,15 +294,15 @@ class PNG
     # Blends +color+ into this color returning a new blended color.
 
     def blend color
-      return Color.new(((r + color.r) / 2), ((g + color.g) / 2),
-                       ((b + color.b) / 2), ((a + color.a) / 2))
+      Color.new(((r + color.r) / 2), ((g + color.g) / 2),
+                ((b + color.b) / 2), ((a + color.a) / 2))
     end
 
     ##
     # Returns a new color with an alpha value adjusted by +i+.
 
     def intensity i
-      return Color.new(r,g,b,(a*i) >> 8)
+      Color.new(r, g, b, (a*i) >> 8)
     end
 
     def inspect # :nodoc:
@@ -318,11 +318,11 @@ class PNG
     # art!
 
     def to_ascii
-      return '  ' if a == 0x00
+      return "  " if a == 0x00
 
       brightness = (((r + g + b) / 3) * a) / 0xFF
 
-      %w(.. ,, ++ 00)[brightness / 64]
+      %w[.. ,, ++ 00][brightness / 64]
     end
 
     def to_s # :nodoc:
@@ -341,26 +341,26 @@ class PNG
       unless s == 0.0 then
         h += 255 if h < 0
         h  = h / 255.0 * 6.0
-        s  = s / 255.0
-        v  = v / 255.0
+        s  /= 255.0
+        v  /= 255.0
         i  = h.floor
         f  = h - i
         p = v * (1 - (s))
         q = v * (1 - (s * (f)))
         w = v * (1 - (s * (1-f)))
         r, g, b = case i
-                  when 0,6 then
-                    [ v, w, p ]
+                  when 0, 6 then
+                    [v, w, p]
                   when 1 then
-                    [ q, v, p ]
+                    [q, v, p]
                   when 2 then
-                    [ p, v, w ]
+                    [p, v, w]
                   when 3 then
-                    [ p, q, v ]
+                    [p, q, v]
                   when 4 then
-                    [ w, p, v ]
+                    [w, p, v]
                   when 5 then
-                    [ v, p, q ]
+                    [v, p, q]
                   else
                     raise [h, s, v, i, f, p, q, w].inspect
                   end
@@ -420,7 +420,7 @@ class PNG
     def initialize width, height, background = Color::Background
       @width = width
       @height = height
-      @data = Array.new(@height) { |x| Array.new(@width, background) }
+      @data = Array.new(@height) { Array.new(@width, background) }
     end
 
     ##
@@ -489,14 +489,14 @@ class PNG
     end
 
     def inspect # :nodoc:
-      '#<%s %dx%d>' % [self.class, @width, @height]
+      "#<%s %dx%d>" % [self.class, @width, @height]
     end
 
     ##
     # Blends +color+ onto the color at point (+x+, +y+).
 
-    def point(x, y, color)
-      self[x,y] = self[x,y].blend(color)
+    def point x, y, color
+      self[x, y] = self[x, y].blend(color)
     end
 
     ##
@@ -504,7 +504,7 @@ class PNG
     #
     # http://en.wikipedia.org/wiki/Xiaolin_Wu's_line_algorithm
 
-    def line(x0, y0, x1, y1, color)
+    def line x0, y0, x1, y1, color
       y0, y1, x0, x1 = y1, y0, x1, x0 if y0 > y1
       dx = x1 - x0
       sx = dx < 0 ? -1 : 1
@@ -513,7 +513,7 @@ class PNG
 
       # 'easy' cases
       if dy == 0 then
-        Range.new(*[x0,x1].sort).each do |x|
+        Range.new(*[x0, x1].sort).each do |x|
           point(x, y0, color)
         end
         return
@@ -539,12 +539,12 @@ class PNG
       e_acc = 0
       if dy > dx then # vertical displacement
         e = (dx << 16) / dy
-        (y0...y1-1).each do |i|
+        (y0...y1-1).each do
           e_acc_temp, e_acc = e_acc, (e_acc + e) & 0xFFFF
-          x0 = x0 + sx if (e_acc <= e_acc_temp)
+          x0 += sx if (e_acc <= e_acc_temp)
           w = 0xFF-(e_acc >> 8)
           point(x0, y0, color.intensity(w))
-          y0 = y0 + 1
+          y0 += 1
           point(x0 + sx, y0, color.intensity(0xFF-w))
         end
         point(x1, y1, color)
@@ -553,7 +553,7 @@ class PNG
 
       # horizontal displacement
       e = (dy << 16) / dx
-      (dx - 1).downto(0) do |i|
+      (dx - 1).downto(0) do
         e_acc_temp, e_acc = e_acc, (e_acc + e) & 0xFFFF
         y0 += 1 if (e_acc <= e_acc_temp)
         w = 0xFF-(e_acc >> 8)
@@ -580,7 +580,7 @@ class PNG
         image << "\n"
       end
 
-      return image.join
+      image.join
     end
   end # Canvas
 end

@@ -1,14 +1,14 @@
 # encoding: BINARY
 
-require 'png/reader'
+require "png/reader"
 
 ##
 # Implements a simple bitmap font by extracting letters from a PNG.
 
 class PNG::Font
-  LETTERS = (('A'..'Z').to_a +
-             ('a'..'z').to_a +
-             ('0'..'9').to_a + [" "] * 16 +
+  LETTERS = (("A".."Z").to_a +
+             ("a".."z").to_a +
+             ("0".."9").to_a + [" "] * 16 +
              '({[<!@#$%^&*?_+-=;,"/~>]})'.split(//))
 
   attr_reader :height, :width, :canvas
@@ -17,7 +17,7 @@ class PNG::Font
     @@default ||= new(File.join(File.dirname(__FILE__), "default_font.png"))
   end
 
-  def initialize(png_file)
+  def initialize png_file
     @canvas = PNG.load_file png_file
     @height, @width = canvas.height / 4, canvas.width / 26
     @cache = {}
@@ -50,8 +50,8 @@ class PNG::Canvas
   #
   #   require 'png/font'
 
-  def annotate(string, x, y,
-               font = PNG::Font.default, align = :left, style = :overwrite)
+  def annotate string, x, y,
+               font = PNG::Font.default, align = :left, style = :overwrite
     case align
     when :left then
       # do nothing

@@ -2,31 +2,31 @@
 
 dir = File.expand_path "~/.ruby_inline"
 if File.directory? dir then
-  require 'fileutils'
+  require "fileutils"
   puts "nuking #{dir}"
   # force removal, Windoze is bitching at me, something to hunt later...
   FileUtils.rm_r dir, :force => true
 end
 
-require 'minitest/autorun'
-require 'rubygems'
-require 'png'
-require 'png/reader'
-require 'png/pie'
+require "minitest/autorun"
+require "rubygems"
+require "png"
+require "png/reader"
+require "png/pie"
 
 class TestPng < Minitest::Test
   def setup
     @canvas = PNG::Canvas.new 5, 10, PNG::Color::White
     @png = PNG.new @canvas
 
-    @blob = <<-EOF.unpack('m*').first
+    @blob = <<-EOF.unpack("m*").first
 iVBORw0KGgoAAAANSUhEUgAAAAUAAAAKCAYAAAB8OZQwAAAAD0lEQVR4nGP4
 jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
     EOF
   end
 
   def test_class_chunk
-    chunk = PNG.chunk 'IHDR', [10, 10, 8, 6, 0, 0, 0 ].pack('N2C5')
+    chunk = PNG.chunk "IHDR", [10, 10, 8, 6, 0, 0, 0].pack("N2C5")
 
     header_crc = "\2152\317\275"
     header_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000"
@@ -37,8 +37,8 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   end
 
   def test_class_chunk_empty
-    chunk = PNG.chunk 'IHDR'
-    expected = "#{0.chr * 4}IHDR#{["IHDR".png_crc].pack 'N'}"
+    chunk = PNG.chunk "IHDR"
+    expected = "#{0.chr * 4}IHDR#{["IHDR".png_crc].pack "N"}"
     assert_equal expected, chunk
   end
 
@@ -49,7 +49,7 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   def test_save
     path = "blah.png"
     @png.save(path)
-    file = File.open(path, 'rb') { |f| f.read }
+    file = File.open(path, "rb") { |f| f.read }
     assert_equal @blob, file
   ensure
     assert_equal 1, File.unlink(path)
@@ -72,9 +72,9 @@ class TestCanvas < Minitest::Test
                  xxxxxxxx
                  xx..xxxx
                  ..xxxxxx
-                          ".gsub(/ /, '')
+                          ".gsub(/ /, "")
 
-    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas1.to_s.gsub(/ /, "x")
   end
 
   def test_composite_underlay
@@ -86,9 +86,9 @@ class TestCanvas < Minitest::Test
                  xxxx..xx
                  xx00xxxx
                  ..xxxxxx
-                          ".gsub(/ /, '')
+                          ".gsub(/ /, "")
 
-    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas1.to_s.gsub(/ /, "x")
   end
 
   def test_composite_overlay
@@ -100,9 +100,9 @@ class TestCanvas < Minitest::Test
                  xxxx..xx
                  xx..xxxx
                  ..xxxxxx
-                          ".gsub(/ /, '')
+                          ".gsub(/ /, "")
 
-    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas1.to_s.gsub(/ /, "x")
   end
 
   def test_composite_blend
@@ -114,9 +114,9 @@ class TestCanvas < Minitest::Test
                  xxxx..xx
                  xx,,xxxx
                  ..xxxxxx
-                          ".gsub(/ /, '')
+                          ".gsub(/ /, "")
 
-    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas1.to_s.gsub(/ /, "x")
   end
 
   def test_composite_bad_style
@@ -134,17 +134,17 @@ class TestCanvas < Minitest::Test
                  xxxx..xx
                  xx00xxxx
                  ..xxxxxx
-                          ".gsub(/ /, '')
+                          ".gsub(/ /, "")
 
-    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas1.to_s.gsub(/ /, "x")
 
     canvas2 = canvas1.extract(1, 1, 2, 2)
 
     expected = " xx..
                  00xx
-                      ".gsub(/ /, '')
+                      ".gsub(/ /, "")
 
-    assert_equal expected, canvas2.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas2.to_s.gsub(/ /, "x")
   end
 
   def test_index
@@ -154,10 +154,10 @@ class TestCanvas < Minitest::Test
 
   def test_index_tall
     @canvas = PNG::Canvas.new 2, 4, PNG::Color::White
-    @canvas[ 0, 0] = PNG::Color::Black
-    @canvas[ 0, 3] = PNG::Color::Background
-    @canvas[ 1, 0] = PNG::Color::Yellow
-    @canvas[ 1, 3] = PNG::Color::Blue
+    @canvas[0, 0] = PNG::Color::Black
+    @canvas[0, 3] = PNG::Color::Background
+    @canvas[1, 0] = PNG::Color::Yellow
+    @canvas[1, 3] = PNG::Color::Blue
 
     expected = "  ,,\n0000\n0000\n..++\n"
 
@@ -166,10 +166,10 @@ class TestCanvas < Minitest::Test
 
   def test_index_wide
     @canvas = PNG::Canvas.new 4, 2, PNG::Color::White
-    @canvas[ 0, 0] = PNG::Color::Black
-    @canvas[ 3, 0] = PNG::Color::Background
-    @canvas[ 0, 1] = PNG::Color::Yellow
-    @canvas[ 3, 1] = PNG::Color::Blue
+    @canvas[0, 0] = PNG::Color::Black
+    @canvas[3, 0] = PNG::Color::Background
+    @canvas[0, 1] = PNG::Color::Yellow
+    @canvas[3, 1] = PNG::Color::Blue
 
     expected = "++0000,,\n..0000  \n"
 
@@ -177,23 +177,19 @@ class TestCanvas < Minitest::Test
   end
 
   def test_index_bad_x
-    begin
-      @canvas[6, 1]
-    rescue => e
-      assert_equal "bad x value 6 >= 5", e.message
-    else
-      flunk "didn't raise"
-    end
+    @canvas[6, 1] # TODO: convert these to assert_raises
+  rescue => e
+    assert_equal "bad x value 6 >= 5", e.message
+  else
+    flunk "didn't raise"
   end
 
   def test_index_bad_y
-    begin
-      @canvas[1, 11]
-    rescue => e
-      assert_equal "bad y value 11 >= 10", e.message
-    else
-      flunk "didn't raise"
-    end
+    @canvas[1, 11]
+  rescue => e
+    assert_equal "bad y value 11 >= 10", e.message
+  else
+    flunk "didn't raise"
   end
 
   def test_index_equals
@@ -217,28 +213,24 @@ class TestCanvas < Minitest::Test
   end
 
   def test_index_equals_bad_x
-    begin
-      @canvas[6, 1] = PNG::Color::Red
-    rescue => e
-      assert_equal "bad x value 6 >= 5", e.message
-    else
-      flunk "didn't raise"
-    end
+    @canvas[6, 1] = PNG::Color::Red
+  rescue => e
+    assert_equal "bad x value 6 >= 5", e.message
+  else
+    flunk "didn't raise"
   end
 
   def test_index_equals_bad_y
-    begin
-      @canvas[1, 11] = PNG::Color::Red
-    rescue => e
-      assert_equal "bad y value 11 >= 10", e.message
-    else
-      flunk "didn't raise"
-    end
+    @canvas[1, 11] = PNG::Color::Red
+  rescue => e
+    assert_equal "bad y value 11 >= 10", e.message
+  else
+    flunk "didn't raise"
   end
 
-#   def test_point
-#     raise NotImplementedError, 'Need to write test_point'
-#   end
+  # def test_point
+  #   raise NotImplementedError, 'Need to write test_point'
+  # end
 
   def test_inspect
     assert_equal "#<PNG::Canvas 5x10>", @canvas.inspect
@@ -322,24 +314,23 @@ class TestCanvas < Minitest::Test
                  xxxx..xx
                  xx00xxxx
                  ..xxxxxx
-                          ".gsub(/ /, '')
+                          ".gsub(/ /, "")
 
-    assert_equal expected, canvas1.to_s.gsub(/ /, 'x')
-
+    assert_equal expected, canvas1.to_s.gsub(/ /, "x")
 
     canvas2 = PNG::Canvas.new 2, 2
     canvas2[0, 0] = PNG::Color::Black
 
-    expected = " xxxx 
+    expected = " xxxx
                  ..xx
-                      ".gsub(/ /, '')
+                      ".gsub(/ /, "")
 
-    assert_equal expected, canvas2.to_s.gsub(/ /, 'x')
+    assert_equal expected, canvas2.to_s.gsub(/ /, "x")
 
     return canvas1, canvas2
   end
 
-  def util_ascii_art(width, height)
+  def util_ascii_art width, height
     (("0" * width * 2) + "\n") * height
   end
 end
@@ -382,11 +373,6 @@ class TestPng::TestColor < Minitest::Test
   end
 
   def test_blend
-#     c1 = @color
-#     c2 = PNG::Color.new 0xFF, 0xFE, 0xFD, 0xFC
-
-#     assert_equal PNG::Color.new(0xFB, 0xFA, 0xF9, 0xF8), c1.blend(c2)
-
     c1 = PNG::Color::White
     c2 = PNG::Color::Black
 
@@ -422,47 +408,47 @@ class TestPng::TestColor < Minitest::Test
   end
 
   def test_to_ascii
-    assert_equal '00', PNG::Color::White.to_ascii, "white"
-    assert_equal '++', PNG::Color::Yellow.to_ascii, "yellow"
-    assert_equal ',,', PNG::Color::Red.to_ascii, "red"
-    assert_equal '..', PNG::Color::Black.to_ascii, "black"
-    assert_equal '  ', PNG::Color::Background.to_ascii, "background"
+    assert_equal "00", PNG::Color::White.to_ascii, "white"
+    assert_equal "++", PNG::Color::Yellow.to_ascii, "yellow"
+    assert_equal ",,", PNG::Color::Red.to_ascii, "red"
+    assert_equal "..", PNG::Color::Black.to_ascii, "black"
+    assert_equal "  ", PNG::Color::Background.to_ascii, "background"
   end
 
   def test_to_ascii_alpha
-    assert_equal '00', PNG::Color.new(255,255,255,255).to_ascii
-    assert_equal '00', PNG::Color.new(255,255,255,192).to_ascii
-    assert_equal '++', PNG::Color.new(255,255,255,191).to_ascii
-    assert_equal ',,', PNG::Color.new(255,255,255,127).to_ascii
-    assert_equal ',,', PNG::Color.new(255,255,255,126).to_ascii
-    assert_equal ',,', PNG::Color.new(255,255,255, 64).to_ascii
-    assert_equal '..', PNG::Color.new(255,255,255, 63).to_ascii
-    assert_equal '..', PNG::Color.new(255,255,255,  1).to_ascii
-    assert_equal '  ', PNG::Color.new(255,255,255,  0).to_ascii
+    assert_equal "00", PNG::Color.new(255, 255, 255, 255).to_ascii
+    assert_equal "00", PNG::Color.new(255, 255, 255, 192).to_ascii
+    assert_equal "++", PNG::Color.new(255, 255, 255, 191).to_ascii
+    assert_equal ",,", PNG::Color.new(255, 255, 255, 127).to_ascii
+    assert_equal ",,", PNG::Color.new(255, 255, 255, 126).to_ascii
+    assert_equal ",,", PNG::Color.new(255, 255, 255, 64).to_ascii
+    assert_equal "..", PNG::Color.new(255, 255, 255, 63).to_ascii
+    assert_equal "..", PNG::Color.new(255, 255, 255,  1).to_ascii
+    assert_equal "  ", PNG::Color.new(255, 255, 255,  0).to_ascii
   end
 
   def test_to_s_name
-    assert_equal 'Red', PNG::Color::Red.to_s
+    assert_equal "Red", PNG::Color::Red.to_s
   end
 
   def test_to_s
-    obj = PNG::Color.new(255,255,255,  0)
-    assert_equal '#<PNG::Color:0xXXXXXX>', obj.to_s.sub(/0x[0-9a-f]+/, '0xXXXXXX')
+    obj = PNG::Color.new(255, 255, 255,  0)
+    assert_equal "#<PNG::Color:0xXXXXXX>", obj.to_s.sub(/0x[0-9a-f]+/, "0xXXXXXX")
   end
 
   def test_equals2
-    assert_equal PNG::Color.new(255,255,255,  0), PNG::Color.new(255,255,255,  0)
+    assert_equal PNG::Color.new(255, 255, 255,  0), PNG::Color.new(255, 255, 255,  0)
   end
 
   def test_hash
-    a = PNG::Color.new(255,255,255,  0)
-    b = PNG::Color.new(255,255,255,  0)
+    a = PNG::Color.new(255, 255, 255,  0)
+    b = PNG::Color.new(255, 255, 255,  0)
     assert_equal a.hash, b.hash
   end
 
-#   def test_values
-#     raise NotImplementedError, 'Need to write test_values'
-#   end
+  # def test_values
+  #   raise NotImplementedError, 'Need to write test_values'
+  # end
 end
 
 class TestPng::TestPie < Minitest::Test
@@ -479,9 +465,9 @@ class TestPng::TestPie < Minitest::Test
        "  ,,,,,,,,,,,,,,,,,,  ",
        "    ,,,,,,,,,,,,,,    ",
        "          ,,          ",
-      nil].join("\n")
+       nil].join("\n")
 
-    actual = PNG::pie_chart(11, 0.25, PNG::Color::Black, PNG::Color::Green)
+    actual = PNG.pie_chart(11, 0.25, PNG::Color::Black, PNG::Color::Green)
     assert_equal expected, actual.to_s
   end
 
@@ -498,13 +484,13 @@ class TestPng::TestPie < Minitest::Test
        "  ,,,,,,,,,,,,,,,,,,  ",
        "    ,,,,,,,,,,,,,,    ",
        "          ,,          ",
-      nil].join("\n")
+       nil].join("\n")
 
-    actual = PNG::pie_chart(10, 0.25, PNG::Color::Black, PNG::Color::Green)
+    actual = PNG.pie_chart(10, 0.25, PNG::Color::Black, PNG::Color::Green)
     assert_equal expected, actual.to_s
   end
 
-  def util_angle(expect, x, y)
+  def util_angle expect, x, y
     actual = PNG.angle(x, y)
     case expect
     when Integer then
