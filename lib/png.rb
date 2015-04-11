@@ -44,7 +44,7 @@ class String # :nodoc: # ZenTest SKIP
     EOM
   end
 rescue CompilationError => e
-  warn "COMPLIATION ERROR: #{e}"
+  warn "COMPILATION ERROR: #{e}"
 
   unless defined? @@crc then
     @@crc = Array.new(256)
