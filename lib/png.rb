@@ -98,7 +98,7 @@ end
 #   bottom left.
 
 class PNG
-  VERSION = "1.2.0"
+  VERSION = "1.2.1"
   SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10].pack("C*")
 
   # Color Types:
