@@ -490,32 +490,26 @@ class TestPng::TestPie < Minitest::Test
     assert_equal expected, actual.to_s
   end
 
-  def util_angle expect, x, y
+  def assert_angle expect, x, y
     actual = PNG.angle(x, y)
-    case expect
-    when Integer then
-      assert_equal(expect, actual,
-                   "[#{x}, #{y}] should be == #{expect}, was #{actual}")
-    else
-      assert_in_delta(expect, actual, 0.5)
-    end
+    assert_in_epsilon expect, actual
   end
 
   def test_math_is_hard_lets_go_shopping
-    util_angle   0,  0,  0
+    assert_angle   0,  0,  0
     (25..500).step(25) do |n|
-      util_angle   0,  0,  n
-      util_angle  90,  n,  0
-      util_angle 180,  0, -n
-      util_angle 270, -n,  0
+      assert_angle   0,  0,  n
+      assert_angle  90,  n,  0
+      assert_angle 180,  0, -n
+      assert_angle 270, -n,  0
     end
 
-    util_angle 359.5, -1, 250
-    util_angle   0.0,  0, 250
-    util_angle   0.5,  1, 250
+    assert_angle 359.5, -1, 250
+    assert_angle   0.0,  0, 250
+    assert_angle   0.2292,  1, 250
 
-    util_angle 89.5, 250,  1
-    util_angle 90.0, 250,  0
-    util_angle 90.5, 250, -1
+    assert_angle 89.77, 250,  1
+    assert_angle 90.0, 250,  0
+    assert_angle 90.23, 250, -1
   end
 end
