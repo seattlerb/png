@@ -1,6 +1,8 @@
 = PNG
 
-* http://seattlerb.rubyforge.org/
+home :: https://github.com/seattlerb/png
+bugs :: https://github.com/seattlerb/png/issues
+doco :: http://docs.seattlerb.org/png
 
 == DESCRIPTION
 
@@ -16,18 +18,18 @@ without any C libraries.
 
 == SYNOPSIS
 
-    require 'png'
-    
+    require "png"
+
     canvas = PNG::Canvas.new 200, 200
-    
+
     # Set a point to a color
     canvas[100, 100] = PNG::Color::Black
-    
+
     # draw an anti-aliased line
     canvas.line 50, 50, 100, 50, PNG::Color::Blue
-    
+
     png = PNG.new canvas
-    png.save 'blah.png'
+    png.save "blah.png"
 
 == REQUIREMENTS
 
@@ -37,13 +39,13 @@ without any C libraries.
 
 == INSTALL
 
-+ sudo gem install -y png
++ sudo gem install png
 
 == LICENSE
 
 (The MIT License)
 
-Copyright (c) 2006-2007 Ryan Davis, Eric Hodel, Zen Spider Software
+Copyright (c) Ryan Davis, Eric Hodel, Zen Spider Software
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
