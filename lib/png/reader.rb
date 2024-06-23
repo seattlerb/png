@@ -32,7 +32,6 @@ class PNG
   end
 
   def self.read_chunk expected_type, png
-    png = png.dup
     size, type = png.slice!(0, 8).unpack "Na4"
     data, crc = png.slice!(0, size + 4).unpack "a#{size}N"
 
