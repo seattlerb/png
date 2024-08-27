@@ -1,11 +1,3 @@
-dir = File.expand_path "~/.ruby_inline"
-if File.directory? dir then
-  require "fileutils"
-  puts "nuking #{dir}"
-  # force removal, Windoze is bitching at me, something to hunt later...
-  FileUtils.rm_r dir, :force => true
-end
-
 require "rubygems"
 require "minitest/autorun"
 require "png/reader"

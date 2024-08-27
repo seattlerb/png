@@ -1,5 +1,3 @@
-# encoding: BINARY
-
 require "png"
 
 class PNG

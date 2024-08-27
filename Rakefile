@@ -10,4 +10,6 @@ Hoe.spec "png" do
   license "MIT"
 end
 
+task(:test).prerequisites.delete "clean" # TODO: consider removing from hoe?
+
 # vim: syntax=Ruby

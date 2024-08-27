@@ -1,14 +1,5 @@
-# encoding: BINARY
-
-require "rubygems"
 require "zlib"
 require "inline"
-
-unless "".respond_to? :getbyte then
-  class String
-    alias :getbyte :[]
-  end
-end
 
 class String # :nodoc: # ZenTest SKIP
   inline do |builder|
@@ -117,13 +108,6 @@ class PNG
 
   begin
     inline do |builder|
-      if RUBY_VERSION < "1.8.6" then
-        builder.prefix <<-EOM
-          #define RARRAY_PTR(s) (RARRAY(s)->ptr)
-          #define RARRAY_LEN(s) (RARRAY(s)->len)
-        EOM
-      end
-
       builder.c <<-EOM
         VALUE png_join() {
           size_t i, j;
@@ -153,7 +137,7 @@ class PNG
     end
   rescue CompilationError
     def png_join
-      @data.map { |row| "\0" + row.map(&:values).join }.join
+      @data.map { |row| "\0".b + row.map(&:values).join }.join
     end
   end
 
@@ -204,7 +188,7 @@ class PNG
 
   class Color
 
-    MAX=255
+    MAX = 0xFF
 
     attr_reader :values
 
@@ -214,7 +198,7 @@ class PNG
 
     def self.from str, name = nil
       str = "%08x" % str if Integer === str
-      colors = str.scan(/[\da-f][\da-f]/i).map(&:hex)
+      colors = str.scan(/\h\h/i).map(&:hex)
       colors << name
       self.new(*colors)
     end
@@ -223,7 +207,7 @@ class PNG
     # Creates a new color with values +red+, +green+, +blue+, and +alpha+.
 
     def initialize red, green, blue, alpha = MAX, name = nil
-      @values = "%c%c%c%c" % [red, green, blue, alpha]
+      @values = "%c%c%c%c" % [red, green, blue, alpha].map(&:chr)
       @name = name
     end
 
@@ -294,8 +278,10 @@ class PNG
     # Blends +color+ into this color returning a new blended color.
 
     def blend color
-      Color.new(((r + color.r) / 2), ((g + color.g) / 2),
-                ((b + color.b) / 2), ((a + color.a) / 2))
+      Color.new(((r + color.r) / 2),
+                ((g + color.g) / 2),
+                ((b + color.b) / 2),
+                ((a + color.a) / 2))
     end
 
     ##

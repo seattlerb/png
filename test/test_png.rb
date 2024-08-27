@@ -1,13 +1,3 @@
-# encoding: ascii-8bit
-
-dir = File.expand_path "~/.ruby_inline"
-if File.directory? dir then
-  require "fileutils"
-  puts "nuking #{dir}"
-  # force removal, Windoze is bitching at me, something to hunt later...
-  FileUtils.rm_r dir, :force => true
-end
-
 require "minitest/autorun"
 require "rubygems"
 require "png"
@@ -28,10 +18,10 @@ jwUwDGVBALuJxzlQugpEAAAAAElFTkSuQmCC
   def test_class_chunk
     chunk = PNG.chunk "IHDR", [10, 10, 8, 6, 0, 0, 0].pack("N2C5")
 
-    header_crc = "\2152\317\275"
-    header_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000"
-    header_length = "\000\000\000\r"
-    header_chunk = "#{header_length}IHDR#{header_data}#{header_crc}"
+    header_crc = "\2152\317\275".b
+    header_data = "\000\000\000\n\000\000\000\n\b\006\000\000\000".b
+    header_length = "\000\000\000\r".b
+    header_chunk = "#{header_length}IHDR#{header_data}#{header_crc}".b
 
     assert_equal header_chunk, chunk
   end
