@@ -1,3 +1,18 @@
+=== 1.3.0 / 2024-08-27
+
+Daaaamn... another 9 years! Means it is really stable, right?
+
+* 4 minor enhancements:
+
+  * Removed a bunch of ancient cruft: getbyte, old 1.8 compile hacks, etc.
+  * Removed a bunch of forced deletions of ~/.ruby_inline in test. Cargo culting?
+  * Removed binary encoding on all source files and called #b for the few needed binary strings.
+  * Removed clean as a dependency for test, speeding up tests 3x.
+
+* 1 bug fix:
+
+  * Fix errors created when string literals are frozen.
+
 === 1.2.1 / 2015-04-13
 
 WOW! SIX YEARS!!
