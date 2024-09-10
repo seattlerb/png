@@ -207,7 +207,7 @@ class PNG
     # Creates a new color with values +red+, +green+, +blue+, and +alpha+.
 
     def initialize red, green, blue, alpha = MAX, name = nil
-      @values = "%c%c%c%c" % [red, green, blue, alpha].map(&:chr)
+      @values = "%c%c%c%c".b % [red, green, blue, alpha].map(&:chr)
       @name = name
     end
 
